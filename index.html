@@ -215,7 +215,11 @@ function render(){
     '</div></header>'+
     '<main class="container">'+content+'</main>';
 }
-
+function safeRender(){
+  var ae=document.activeElement;
+  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
+  render();
+}
 function authView(){
   if(authMode==='login'){
     return '<div class="auth-card"><h1>🎯 OIL 赛制管理器</h1>'+
@@ -713,10 +717,10 @@ async function boot(){
   try{
     await refreshFromServer();render();
     sb.channel('oil-changes')
-      .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();render();})
-      .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();render();})
-      .subscribe();
-    setInterval(async function(){await refreshFromServer();render();},5000);
+  .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();safeRender();})
+  .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();safeRender();})
+  .subscribe();
+setInterval(async function(){await refreshFromServer();safeRender();},5000);
     sb.auth.onAuthStateChange(async function(event){
       if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[]};render();}
     });
