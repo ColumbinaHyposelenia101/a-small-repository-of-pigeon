@@ -720,7 +720,6 @@ async function boot(){
   .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();safeRender();})
   .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();safeRender();})
   .subscribe();
-setInterval(async function(){await refreshFromServer();safeRender();},5000);
     sb.auth.onAuthStateChange(async function(event){
       if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[]};render();}
     });
