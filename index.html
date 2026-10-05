@@ -6,116 +6,93 @@
 <title>OIL 赛制管理器</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #0e1016; color: #e6e8ee; min-height: 100vh; line-height: 1.6;
-  }
-  a { color: #818cf8; cursor: pointer; text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#0e1016;color:#e6e8ee;min-height:100vh;line-height:1.6}
+  a{color:#818cf8;cursor:pointer;text-decoration:none}a:hover{text-decoration:underline}
+  #fatal{position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 20px;font-family:monospace;font-size:13px;white-space:pre-wrap;display:none}
+  .nav{background:#151824;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
+  .nav-inner{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+  .brand{font-weight:700;font-size:18px;cursor:pointer}
+  .nav-right{display:flex;align-items:center;gap:12px}
+  .user-chip{background:#232838;padding:4px 12px 4px 4px;border-radius:20px;font-size:13px;color:#b8bece;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.15s}
+  .user-chip:hover{background:#2d3348}
+  .user-chip .avatar-mini{width:24px;height:24px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;overflow:hidden}
+  .user-chip .avatar-mini img{width:100%;height:100%;object-fit:cover}
+  .container{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid transparent;font-size:14px;cursor:pointer;font-family:inherit;background:#232838;color:#e6e8ee;transition:.15s;text-decoration:none}
+  .btn:hover{background:#2d3348}
+  .btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#7376f5}
+  .btn-danger{background:#b91c1c;color:#fff}.btn-danger:hover{background:#dc2626}
+  .btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#22c55e}
+  .btn-ghost{background:transparent;border-color:#2d3348}
+  .btn-block{width:100%}.btn-sm{padding:4px 10px;font-size:12px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .input,select,textarea{width:100%;padding:9px 12px;border-radius:8px;background:#0e1016;border:1px solid #2d3348;color:#e6e8ee;font-size:14px;font-family:inherit;outline:none}
+  .input:focus,select:focus,textarea:focus{border-color:#6366f1}
+  select{cursor:pointer}textarea{resize:vertical;min-height:90px}
+  .card{background:#151824;border:1px solid #232838;border-radius:12px;padding:22px;margin-bottom:18px}
+  .card h2{font-size:17px;margin-bottom:14px}
+  .card h3{font-size:14px;margin:18px 0 8px;color:#b8bece}
+  .card h3:first-child{margin-top:0}
+  .muted{color:#7c8399;font-size:13px}.center{text-align:center}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .field{margin-bottom:10px}.field label{display:block;font-size:12px;color:#7c8399;margin-bottom:4px}
+  .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;background:#232838;color:#b8bece;margin-right:6px}
+  .tag-a{background:#1e3a5f;color:#7dd3fc}.tag-b{background:#5f1e3a;color:#f9a8d4}
+  .status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .status-draft{background:#2d3348;color:#b8bece}
+  .status-ongoing{background:#14532d;color:#86efac}
+  .status-finished{background:#422006;color:#fbbf24}
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .auth-card{background:#151824;border:1px solid #232838;border-radius:16px;padding:36px;width:100%;max-width:380px}
+  .auth-card h1{font-size:22px;margin-bottom:6px}
+  .auth-card .input{margin-bottom:12px}
+  .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+  .page-head h1{font-size:24px;margin-top:8px}
+  .matchup{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start}
+  .team-col h3{text-align:center;margin-bottom:10px;color:#e6e8ee}
+  .slot{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0e1016;border-radius:8px;margin-bottom:6px;font-size:14px}
+  .slot .pos{color:#7c8399;font-size:12px;width:42px;flex-shrink:0}
+  .slot .pname{flex:1}
+  .slot .pname a{color:#e6e8ee}
+  .slot .pname a:hover{color:#818cf8}
+  .vs{align-self:center;font-weight:700;color:#6366f1;font-size:18px;padding-top:30px}
+  .contest-item{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#151824;border:1px solid #232838;border-radius:10px;margin-bottom:10px;cursor:pointer;transition:.15s}
+  .contest-item:hover{border-color:#6366f1}
+  .contest-item h3{font-size:16px;margin-bottom:4px}
+  .ok{color:#86efac;margin:10px 0}.warn{color:#fbbf24;font-size:13px;margin:6px 0}
+  .err{color:#f87171;font-size:13px;margin:6px 0}
+  .ghost-user{color:#f87171;font-style:italic;font-size:13px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #232838;font-size:14px}
+  th{color:#7c8399;font-size:12px;font-weight:500}
+  .play-card{border-color:#6366f1}
+  .team-link-btn{font-size:16px;padding:12px 22px}
+  .divider{height:1px;background:#232838;margin:18px 0}
+  .desc-text{white-space:pre-wrap;color:#d1d5db}
+  .intro-card{border-color:#4f46e5}
 
-  #fatal {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-    background: #7f1d1d; color: #fff; padding: 12px 20px;
-    font-family: monospace; font-size: 13px; white-space: pre-wrap;
-    display: none;
-  }
-
-  .nav { background: #151824; border-bottom: 1px solid #232838; position: sticky; top: 0; z-index: 10; }
-  .nav-inner { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
-  .brand { font-weight: 700; font-size: 18px; cursor: pointer; }
-  .nav-right { display: flex; align-items: center; gap: 12px; }
-  .user-chip { background: #232838; padding: 4px 12px; border-radius: 20px; font-size: 13px; color: #b8bece; }
-
-  .container { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
-
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 16px; border-radius: 8px; border: 1px solid transparent;
-    font-size: 14px; cursor: pointer; font-family: inherit;
-    background: #232838; color: #e6e8ee; transition: .15s; text-decoration: none;
-  }
-  .btn:hover { background: #2d3348; }
-  .btn-primary { background: #6366f1; color: #fff; }
-  .btn-primary:hover { background: #7376f5; }
-  .btn-danger { background: #b91c1c; color: #fff; }
-  .btn-danger:hover { background: #dc2626; }
-  .btn-success { background: #16a34a; color: #fff; }
-  .btn-success:hover { background: #22c55e; }
-  .btn-ghost { background: transparent; border-color: #2d3348; }
-  .btn-block { width: 100%; }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
-
-  .input, select, textarea {
-    width: 100%; padding: 9px 12px; border-radius: 8px;
-    background: #0e1016; border: 1px solid #2d3348;
-    color: #e6e8ee; font-size: 14px; font-family: inherit; outline: none;
-  }
-  .input:focus, select:focus, textarea:focus { border-color: #6366f1; }
-  select { cursor: pointer; }
-  textarea { resize: vertical; min-height: 90px; }
-
-  .card { background: #151824; border: 1px solid #232838; border-radius: 12px; padding: 22px; margin-bottom: 18px; }
-  .card h2 { font-size: 17px; margin-bottom: 14px; }
-  .card h3 { font-size: 14px; margin: 18px 0 8px; color: #b8bece; }
-  .card h3:first-child { margin-top: 0; }
-
-  .muted { color: #7c8399; font-size: 13px; }
-  .center { text-align: center; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .field { margin-bottom: 10px; }
-  .field label { display: block; font-size: 12px; color: #7c8399; margin-bottom: 4px; }
-
-  .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; background: #232838; color: #b8bece; margin-right: 6px; }
-  .tag-a { background: #1e3a5f; color: #7dd3fc; }
-  .tag-b { background: #5f1e3a; color: #f9a8d4; }
-  .tag-warn { background: #422006; color: #fbbf24; }
-
-  .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-  .status-draft { background: #2d3348; color: #b8bece; }
-  .status-ongoing { background: #14532d; color: #86efac; }
-  .status-finished { background: #422006; color: #fbbf24; }
-
-  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .auth-card { background: #151824; border: 1px solid #232838; border-radius: 16px; padding: 36px; width: 100%; max-width: 380px; }
-  .auth-card h1 { font-size: 22px; margin-bottom: 6px; }
-  .auth-card .input { margin-bottom: 12px; }
-
-  .page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 12px; flex-wrap: wrap; }
-  .page-head h1 { font-size: 24px; margin-top: 8px; }
-
-  .matchup { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; }
-  .team-col h3 { text-align: center; margin-bottom: 10px; color: #e6e8ee; }
-  .slot { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #0e1016; border-radius: 8px; margin-bottom: 6px; font-size: 14px; }
-  .slot .pos { color: #7c8399; font-size: 12px; width: 42px; flex-shrink: 0; }
-  .slot .pname { flex: 1; }
-  .vs { align-self: center; font-weight: 700; color: #6366f1; font-size: 18px; padding-top: 30px; }
-
-  .contest-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #151824; border: 1px solid #232838; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: .15s; }
-  .contest-item:hover { border-color: #6366f1; }
-  .contest-item h3 { font-size: 16px; margin-bottom: 4px; }
-
-  .ok { color: #86efac; margin: 10px 0; }
-  .warn { color: #fbbf24; font-size: 13px; margin: 6px 0; }
-  .err { color: #f87171; font-size: 13px; margin: 6px 0; }
-  .ghost-user { color: #f87171; font-style: italic; font-size: 13px; }
-
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232838; font-size: 14px; }
-  th { color: #7c8399; font-size: 12px; font-weight: 500; }
-
-  .play-card { border-color: #6366f1; }
-  .team-link-btn { font-size: 16px; padding: 12px 22px; }
-  .divider { height: 1px; background: #232838; margin: 18px 0; }
-
-  .desc-text { white-space: pre-wrap; color: #d1d5db; }
-  .intro-card { border-color: #4f46e5; }
-
-  .sync-badge { font-size: 11px; color: #7c8399; padding: 2px 8px; border-radius: 10px; background: #232838; }
-  .sync-ok { color: #86efac; }
-  .sync-err { color: #f87171; }
+  /* 个人主页样式 */
+  .profile-card{background:linear-gradient(180deg,#1c2030 0,#151824 100%);border:1px solid #232838;border-radius:12px;padding:28px;margin-bottom:18px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .profile-avatar{width:120px;height:120px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;border:3px solid #232838}
+  .profile-avatar img{width:100%;height:100%;object-fit:cover}
+  .profile-avatar .overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.2s}
+  .profile-avatar.editable:hover .overlay{opacity:1}
+  .profile-info{flex:1;min-width:220px}
+  .profile-info h1{font-size:26px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .profile-info .meta{color:#7c8399;font-size:13px;margin-bottom:14px}
+  .profile-info .stats{display:flex;gap:24px;flex-wrap:wrap;margin-top:14px}
+  .profile-info .stat{text-align:left}
+  .profile-info .stat .num{font-size:20px;font-weight:700;color:#e6e8ee}
+  .profile-info .stat .lbl{font-size:12px;color:#7c8399}
+  .avatar-wrap{position:relative;display:inline-block}
+  .avatar-lg{width:32px;height:32px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0}
+  .avatar-lg img{width:100%;height:100%;object-fit:cover}
+  .list-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#0e1016;border-radius:8px;margin-bottom:8px;cursor:pointer;transition:.15s}
+  .list-row:hover{background:#151824;border-color:#6366f1}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:#312e81;color:#a5b4fc}
+  .badge-win{background:#14532d;color:#86efac}
+  .badge-lose{background:#422006;color:#fbbf24}
 </style>
 </head>
 <body>
@@ -123,979 +100,629 @@
 <div id="app">加载中…</div>
 
 <script>
-(function () {
-  'use strict';
+(function(){
+'use strict';
+var SUPABASE_URL='https://gbtmzlbiioximvxbmmtx.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdidG16bGJpaW94aW12eGJtbXR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMDc4MTYsImV4cCI6MjEwNjc4MzgxNn0.41eFh_ctkCKR5moEaHKMj_kp2qISrVNPxT4AeywCKNc';
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-  /* ==================== Supabase 配置 ==================== */
-  var SUPABASE_URL = 'https://gbtmzlbiioximvxbmmtx.supabase.co';
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdidG16bGJpaW94aW12eGJtbXR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMDc4MTYsImV4cCI6MjEwNjc4MzgxNn0.41eFh_ctkCKR5moEaHKMj_kp2qISrVNPxT4AeywCKNc';
-  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var fatalEl=document.getElementById('fatal');
+window.onerror=function(msg,url,line){fatalEl.style.display='block';fatalEl.textContent='脚本错误：'+msg+'\n位置：第 '+line+' 行';};
+window.addEventListener('unhandledrejection',function(e){fatalEl.style.display='block';fatalEl.textContent='Promise 错误：'+(e.reason&&e.reason.message?e.reason.message:e.reason);});
 
-  /* ==================== 全局错误显示 ==================== */
-  var fatalEl = document.getElementById('fatal');
-  window.onerror = function (msg, url, line, col) {
-    fatalEl.style.display = 'block';
-    fatalEl.textContent = '脚本错误：' + msg + '\n位置：第 ' + line + ' 行';
-  };
-  window.addEventListener('unhandledrejection', function (e) {
-    fatalEl.style.display = 'block';
-    fatalEl.textContent = 'Promise 错误：' + (e.reason && e.reason.message ? e.reason.message : e.reason);
-  });
+var POS_ORDER=['top','jug','mid','bot','sup'];
+var POS_NAMES={top:'TOP',jug:'JUG',mid:'MID',bot:'BOT',sup:'SUP'};
+var BOT_NAMES=['bot1','bot2','bot3','bot4','bot5','bot6','bot7','bot8','bot9','bot10'];
 
-  /* ==================== 全局状态 ==================== */
-  var POS_ORDER = ['top', 'jug', 'mid', 'bot', 'sup'];
-  var POS_NAMES = { top: 'TOP', jug: 'JUG', mid: 'MID', bot: 'BOT', sup: 'SUP' };
-  var BOT_NAMES = ['bot1','bot2','bot3','bot4','bot5','bot6','bot7','bot8','bot9','bot10'];
+var db={users:[],contests:[]};
+var myProfile=null;
+var route={view:'home',contestId:null,userId:null};
+var authMode='login';
+var connected=false,syncing=false;
 
-  var db = { users: [], contests: [] };
-  var myProfile = null;          // { id, username, isWebmaster }
-  var route = { view: 'home', contestId: null };
-  var authMode = 'login';
-  var connected = false;
-  var syncing = false;
-
-  /* ==================== 工具函数 ==================== */
-  function uid(prefix) {
-    return (prefix || 'id') + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+function uid(p){return(p||'id')+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function findContest(id){for(var i=0;i<db.contests.length;i++)if(db.contests[i].id===id)return db.contests[i];return null;}
+function findUserById(id){for(var i=0;i<db.users.length;i++)if(db.users[i].id===id)return db.users[i];return null;}
+function findUserByName(n){for(var i=0;i<db.users.length;i++)if(db.users[i].username===n)return db.users[i];return null;}
+function currentUser(){return myProfile;}
+function canManage(c){if(!myProfile)return false;if(myProfile.isWebmaster)return true;return(c.adminIds||[]).indexOf(myProfile.id)>=0;}
+function statusText(s){return{draft:'准备中',ongoing:'进行中',finished:'已结束'}[s]||s;}
+function avatarHTML(user,size){
+  size=size||32;
+  if(!user)return '<div class="avatar-lg" style="width:'+size+'px;height:'+size+'px">?</div>';
+  var initial=(user.username||'?')[0].toUpperCase();
+  if(user.avatarUrl){
+    return '<div class="avatar-lg" style="width:'+size+'px;height:'+size+'px"><img src="'+esc(user.avatarUrl)+'" onerror="this.style.display=\'none\';this.parentNode.textContent=\''+initial+'\'"></div>';
   }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
-  function findContest(id) {
-    for (var i = 0; i < db.contests.length; i++) if (db.contests[i].id === id) return db.contests[i];
-    return null;
-  }
-  function findUserById(id) {
-    for (var i = 0; i < db.users.length; i++) if (db.users[i].id === id) return db.users[i];
-    return null;
-  }
-  function findUserByName(n) {
-    for (var i = 0; i < db.users.length; i++) if (db.users[i].username === n) return db.users[i];
-    return null;
-  }
-  function currentUser() { return myProfile; }
-  function isWebmaster() { return !!(myProfile && myProfile.isWebmaster); }
-  function canManage(c) {
-    if (!myProfile) return false;
-    if (myProfile.isWebmaster) return true;
-    return (c.adminIds || []).indexOf(myProfile.id) >= 0;
-  }
-  function statusText(s) {
-    return { draft: '准备中', ongoing: '进行中', finished: '已结束' }[s] || s;
-  }
-  function displayName(userId) {
-    var u = findUserById(userId);
-    if (u) return esc(u.username);
-    // bot 兜底
-    if (typeof userId === 'string' && userId.indexOf('bot_') === 0) {
-      return 'bot' + userId.slice(4);
-    }
-    if (!userId) return '<span class="ghost-user">（无 ID）</span>';
+  return '<div class="avatar-lg" style="width:'+size+'px;height:'+size+'px">'+initial+'</div>';
+}
+function userLink(userId){
+  var u=findUserById(userId);
+  if(!u){
+    if(typeof userId==='string'&&userId.indexOf('bot_')===0)return '<span>'+esc('bot'+userId.slice(4))+'</span>';
     return '<span class="ghost-user">未知用户</span>';
   }
+  return '<a onclick="OIL.openProfile(\''+userId+'\')">'+esc(u.username)+'</a>';
+}
+function displayName(userId){var u=findUserById(userId);return u?esc(u.username):(typeof userId==='string'&&userId.indexOf('bot_')===0?'bot'+userId.slice(4):'<span class="ghost-user">未知用户</span>');}
 
-  /* ==================== 数据层：从 Supabase 拉取 ==================== */
-  function rowToContest(c) {
-    return {
-      id: c.id,
-      title: c.title,
-      description: c.description || '',
-      status: c.status,
-      teamProblemLink: c.team_problem_link || '',
-      personalProblems: c.personal_problems || { top:'', jug:'', mid:'', bot:'', sup:'' },
-      adminIds: c.admin_ids || [],
-      participants: c.participants || [],
-      pendingRequests: c.pending_requests || [],
-      createdBy: c.created_by,
-      createdAt: new Date(c.created_at).getTime()
-    };
+function rowToContest(c){return{id:c.id,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
+function contestToRow(c){return{id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};}
+function rowToUser(u){return{id:u.id,username:u.username,isWebmaster:u.is_webmaster,avatarUrl:u.avatar_url||'',createdAt:u.created_at?new Date(u.created_at).getTime():0};}
+
+async function refreshFromServer(){
+  try{
+    var r=await sb.auth.getUser();
+    var user=r.data.user;
+    if(!user){myProfile=null;db={users:[],contests:[]};connected=true;return;}
+    var pr=await sb.from('profiles').select('id, username, is_webmaster, avatar_url, created_at');
+    if(pr.error)throw new Error('读取用户失败：'+pr.error.message);
+    db.users=(pr.data||[]).map(rowToUser);
+    for(var i=0;i<BOT_NAMES.length;i++){
+      var botId='bot_'+(i+1);
+      if(!findUserById(botId))db.users.push({id:botId,username:BOT_NAMES[i],isWebmaster:false,isBot:true,avatarUrl:'',createdAt:0});
+    }
+    myProfile=null;
+    for(var j=0;j<db.users.length;j++)if(db.users[j].id===user.id){myProfile=db.users[j];break;}
+    if(!myProfile){
+      var fallback=(user.email||'').split('@')[0]||'user';
+      await sb.from('profiles').insert({id:user.id,username:fallback,is_webmaster:false,login_email:user.email||''});
+      myProfile={id:user.id,username:fallback,isWebmaster:false,avatarUrl:'',createdAt:Date.now()};
+      db.users.push(myProfile);
+    }
+    var cr=await sb.from('contests').select('*').order('created_at',{ascending:false});
+    if(cr.error)throw new Error('读取比赛失败：'+cr.error.message);
+    db.contests=(cr.data||[]).map(rowToContest);
+    connected=true;
+  }catch(e){connected=false;console.error(e);}
+}
+
+async function pushAllContests(){
+  if(!myProfile||syncing)return;
+  syncing=true;
+  try{
+    var rows=[];
+    for(var i=0;i<db.contests.length;i++){var c=db.contests[i];if(canManage(c))rows.push(contestToRow(c));}
+    if(rows.length===0)return;
+    var r=await sb.from('contests').upsert(rows);
+    if(r.error)console.error('推送失败：'+r.error.message);
+  }finally{syncing=false;}
+}
+async function deleteContestFromServer(id){if(!myProfile)return;var r=await sb.from('contests').delete().eq('id',id);if(r.error)console.error('删除失败：'+r.error.message);}
+function saveDB(){pushAllContests();}
+
+function render(){
+  var app=document.getElementById('app');if(!app)return;
+  if(!connected){app.innerHTML='<div class="auth-wrap"><div class="auth-card"><h1>⚠ 连接中…</h1><p class="muted" style="margin-top:12px">正在连接服务器，若长时间无响应请刷新页面。</p></div></div>';return;}
+  var user=currentUser();
+  if(!user){app.innerHTML='<div class="auth-wrap">'+authView()+'</div>';return;}
+  var content='';
+  if(route.view==='home')content=homeView();
+  else if(route.view==='contest')content=contestView(user);
+  else if(route.view==='profile')content=profileView(route.userId);
+  app.innerHTML=
+    '<header class="nav"><div class="nav-inner">'+
+      '<div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div>'+
+      '<div class="nav-right">'+
+        '<div class="user-chip" onclick="OIL.openProfile(\''+user.id+'\')">'+
+          avatarHTML(user,24)+
+          '<span>'+esc(user.username)+'</span>'+
+        '</div>'+
+        '<button class="btn btn-ghost btn-sm" onclick="OIL.logout()">退出</button>'+
+      '</div>'+
+    '</div></header>'+
+    '<main class="container">'+content+'</main>';
+}
+
+function authView(){
+  if(authMode==='login'){
+    return '<div class="auth-card"><h1>🎯 OIL 赛制管理器</h1>'+
+      '<p class="muted" style="margin-bottom:20px">登录以继续</p>'+
+      '<input id="in-user" class="input" placeholder="用户名">'+
+      '<input id="in-pass" class="input" type="password" placeholder="密码">'+
+      '<button class="btn btn-primary btn-block" onclick="OIL.doLogin()">登录</button>'+
+      '<p class="muted center" style="margin-top:14px">还没有账号？<a onclick="OIL.switchAuth(\'register\')">注册</a></p></div>';
   }
-  function contestToRow(c) {
-    return {
-      id: c.id,
-      title: c.title,
-      description: c.description || '',
-      status: c.status,
-      team_problem_link: c.teamProblemLink || '',
-      personal_problems: c.personalProblems,
-      admin_ids: c.adminIds,
-      participants: c.participants,
-      pending_requests: c.pendingRequests,
-      created_by: c.createdBy || (myProfile ? myProfile.id : null)
-    };
-  }
+  return '<div class="auth-card"><h1>🎯 注册</h1>'+
+    '<p class="muted" style="margin-bottom:20px">请填写以下信息完成注册</p>'+
+    '<input id="in-user" class="input" placeholder="用户名（字母数字下划线）">'+
+    '<input id="in-pass" class="input" type="password" placeholder="密码（至少 6 位）">'+
+    '<input id="in-pass2" class="input" type="password" placeholder="确认密码">'+
+    '<button class="btn btn-primary btn-block" onclick="OIL.doRegister()">注册</button>'+
+    '<p class="muted center" style="margin-top:14px">已有账号？<a onclick="OIL.switchAuth(\'login\')">登录</a></p></div>';
+}
 
-  async function refreshFromServer() {
-    try {
-      // 当前登录用户
-      var { data: { user } } = await sb.auth.getUser();
-      if (!user) {
-        myProfile = null;
-        db = { users: [], contests: [] };
-        connected = true;
-        return;
-      }
+function switchAuth(m){authMode=m;render();}
 
-      // 拉所有用户资料
-      var { data: profiles, error: pErr } = await sb.from('profiles').select('id, username, is_webmaster');
-      if (pErr) throw new Error('读取用户失败：' + pErr.message);
+async function doRegister(){
+  var nE=document.getElementById('in-user'),pE=document.getElementById('in-pass'),pE2=document.getElementById('in-pass2');
+  if(!nE||!pE||!pE2)return;
+  var name=nE.value.trim(),pass=pE.value,pass2=pE2.value;
+  if(!name||!pass)return alert('请填写用户名和密码');
+  if(pass.length<6)return alert('密码至少 6 位');
+  if(pass!==pass2)return alert('两次输入的密码不一致');
+  if(!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(name))return alert('用户名只能包含字母、数字、下划线或中文');
+  var local=name.replace(/[^a-zA-Z0-9_]/g,'_').toLowerCase();
+  var email=local+'@oil.local';
+  var r=await sb.auth.signUp({email:email,password:pass,options:{data:{username:name}}});
+  if(r.error){if(r.error.message&&r.error.message.indexOf('already')>=0)return alert('该用户名已被注册');return alert('注册失败：'+r.error.message);}
+  await new Promise(function(rs){setTimeout(rs,800);});
+  // 补写 login_email
+  try{var u=await sb.auth.getUser();if(u.data.user)await sb.from('profiles').update({login_email:email}).eq('id',u.data.user.id);}catch(e){}
+  await refreshFromServer();render();
+  alert('注册成功，欢迎！');
+}
 
-      db.users = (profiles || []).map(function (u) {
-        return { id: u.id, username: u.username, isWebmaster: u.is_webmaster };
-      });
+async function doLogin(){
+  var nE=document.getElementById('in-user'),pE=document.getElementById('in-pass');
+  if(!nE||!pE)return;
+  var name=nE.value.trim(),pass=pE.value;
+  if(!name||!pass)return alert('请填写用户名和密码');
+  // 反查 login_email
+  var q=await sb.from('profiles').select('login_email').eq('username',name).maybeSingle();
+  var email=(q.data&&q.data.login_email)?q.data.login_email:(name.replace(/[^a-zA-Z0-9_]/g,'_').toLowerCase()+'@oil.local');
+  var r=await sb.auth.signInWithPassword({email:email,password:pass});
+  if(r.error)return alert('用户名或密码错误');
+  await refreshFromServer();
+  route={view:'home',contestId:null,userId:null};
+  render();
+}
 
-      // 补充本地 bot（这些不在 Supabase 里，但用固定 id 保证跨设备一致）
-      for (var i = 0; i < BOT_NAMES.length; i++) {
-        var botId = 'bot_' + (i + 1);
-        if (!findUserById(botId)) {
-          db.users.push({ id: botId, username: BOT_NAMES[i], isWebmaster: false, isBot: true });
-        }
-      }
+async function logout(){
+  try{await sb.auth.signOut();}catch(e){}
+  myProfile=null;db={users:[],contests:[]};
+  route={view:'home',contestId:null,userId:null};
+  render();
+}
 
-      // 自己的 profile
-      myProfile = null;
-      for (var j = 0; j < db.users.length; j++) {
-        if (db.users[j].id === user.id) { myProfile = db.users[j]; break; }
-      }
-      // 如果 profiles 里没有自己（触发器没生效），手动补一条
-      if (!myProfile) {
-        var fallbackName = (user.email || '').split('@')[0] || 'user';
-        await sb.from('profiles').insert({ id: user.id, username: fallbackName, is_webmaster: false });
-        myProfile = { id: user.id, username: fallbackName, isWebmaster: false };
-        db.users.push(myProfile);
-      }
+function goHome(){route={view:'home',contestId:null,userId:null};render();}
+function openContest(id){route={view:'contest',contestId:id,userId:null};render();}
+function openProfile(id){route={view:'profile',contestId:null,userId:id};render();}
 
-      // 拉所有比赛
-      var { data: contests, error: cErr } = await sb.from('contests').select('*').order('created_at', { ascending: false });
-      if (cErr) throw new Error('读取比赛失败：' + cErr.message);
+/* ============ 个人主页 ============ */
+function profileView(userId){
+  var u=findUserById(userId);
+  if(!u)return '<div class="card"><p>用户不存在</p><button class="btn" onclick="OIL.goHome()">返回</button></div>';
+  var isMe=myProfile&&myProfile.id===userId;
+  var isBot=!!u.isBot;
+  var initial=(u.username||'?')[0].toUpperCase();
+  var avatarInner=u.avatarUrl?('<img src="'+esc(u.avatarUrl)+'">'):initial;
 
-      db.contests = (contests || []).map(rowToContest);
-
-      connected = true;
-    } catch (e) {
-      connected = false;
-      console.error(e);
+  // 参赛统计
+  var participated=[],wins=0,losses=0;
+  for(var i=0;i<db.contests.length;i++){
+    var c=db.contests[i];
+    var me=null;for(var k=0;k<c.participants.length;k++)if(c.participants[k].userId===userId){me=c.participants[k];break;}
+    if(me){
+      participated.push({contest:c,me:me});
     }
   }
 
-  /* ==================== 数据层：推送到 Supabase ==================== */
-  async function pushAllContests() {
-    if (!myProfile) return;
-    if (syncing) return;
-    syncing = true;
-    try {
-      // 只推自己创建或自己是管理员的
-      var rows = [];
-      for (var i = 0; i < db.contests.length; i++) {
-        var c = db.contests[i];
-        if (canManage(c)) rows.push(contestToRow(c));
-      }
-      if (rows.length === 0) return;
-      var { error } = await sb.from('contests').upsert(rows);
-      if (error) console.error('推送失败：' + error.message);
-    } finally {
-      syncing = false;
-    }
-  }
+  var html='<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button></div></div>';
 
-  async function deleteContestFromServer(id) {
-    if (!myProfile) return;
-    var { error } = await sb.from('contests').delete().eq('id', id);
-    if (error) console.error('删除失败：' + error.message);
-  }
+  html+='<div class="profile-card">'+
+    '<div class="profile-avatar'+(isMe&&!isBot?' editable':'')+'" '+(isMe&&!isBot?'onclick="OIL.pickAvatar()"':'')+'>'+
+      avatarInner+
+      (isMe&&!isBot?'<div class="overlay">点击更换</div>':'')+
+    '</div>'+
+    '<div class="profile-info">'+
+      '<h1>'+esc(u.username)+
+        (u.isWebmaster?' <span class="badge">管理员</span>':'')+
+        (isBot?' <span class="badge">人机</span>':'')+
+      '</h1>'+
+      '<div class="meta">'+
+        (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
+        'ID: '+esc(u.id.slice(0,12))
+      '</div>'+
+      (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
+      '<div class="stats">'+
+        '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
 
-  // 兼容原有调用：任何修改后触发异步推送
-  function saveDB() {
-    pushAllContests();
-  }
-
-  /* ==================== 渲染入口 ==================== */
-  function render() {
-    var app = document.getElementById('app');
-    if (!app) return;
-
-    if (!connected) {
-      app.innerHTML = '<div class="auth-wrap"><div class="auth-card">' +
-        '<h1>⚠ 连接中…</h1>' +
-        '<p class="muted" style="margin-top:12px">正在连接服务器，若长时间无响应请刷新页面。</p>' +
-        '</div></div>';
-      return;
-    }
-
-    var user = currentUser();
-    if (!user) {
-      app.innerHTML = '<div class="auth-wrap">' + authView() + '</div>';
-      return;
-    }
-
-    var content = '';
-    if (route.view === 'home') content = homeView();
-    else if (route.view === 'contest') content = contestView(user);
-
-    app.innerHTML =
-      '<header class="nav"><div class="nav-inner">' +
-        '<div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div>' +
-        '<div class="nav-right">' +
-          '<span class="user-chip">' + (user.isWebmaster ? '👑 ' : '') + esc(user.username) + '</span>' +
-          '<button class="btn btn-ghost btn-sm" onclick="OIL.logout()">退出</button>' +
-        '</div>' +
-      '</div></header>' +
-      '<main class="container">' + content + '</main>';
-  }
-
-  /* ==================== 登录 / 注册 ==================== */
-  function authView() {
-    if (authMode === 'login') {
-      return '<div class="auth-card">' +
-        '<h1>🎯 OIL 赛制管理器</h1>' +
-        '<p class="muted" style="margin-bottom:20px">登录以继续</p>' +
-        '<input id="in-user" class="input" placeholder="用户名">' +
-        '<input id="in-pass" class="input" type="password" placeholder="密码">' +
-        '<button class="btn btn-primary btn-block" onclick="OIL.doLogin()">登录</button>' +
-        '<p class="muted center" style="margin-top:14px">还没有账号？<a onclick="OIL.switchAuth(\'register\')">注册</a></p>' +
+  if(participated.length>0){
+    html+='<div class="card"><h2>参赛记录</h2>';
+    participated.forEach(function(p){
+      var c=p.contest,me=p.me;
+      html+='<div class="list-row" onclick="OIL.openContest(\''+c.id+'\')">'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'</div>'+
+          '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+'</div>'+
+        '</div>'+
+        '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span>'+
       '</div>';
-    }
-    return '<div class="auth-card">' +
-      '<h1>🎯 注册</h1>' +
-      '<p class="muted" style="margin-bottom:20px">首个注册用户自动成为站长 👑</p>' +
-      '<input id="in-user" class="input" placeholder="用户名（字母数字下划线）">' +
-      '<input id="in-pass" class="input" type="password" placeholder="密码（至少 6 位）">' +
-      '<input id="in-pass2" class="input" type="password" placeholder="确认密码">' +
-      '<button class="btn btn-primary btn-block" onclick="OIL.doRegister()">注册</button>' +
-      '<p class="muted center" style="margin-top:14px">已有账号？<a onclick="OIL.switchAuth(\'login\')">登录</a></p>' +
-    '</div>';
+    });
+    html+='</div>';
   }
 
-  function switchAuth(mode) { authMode = mode; render(); }
+  return html;
+}
 
-  async function doRegister() {
-    var nameEl = document.getElementById('in-user');
-    var passEl = document.getElementById('in-pass');
-    var pass2El = document.getElementById('in-pass2');
-    if (!nameEl || !passEl || !pass2El) return;
-    var name = nameEl.value.trim();
-    var pass = passEl.value;
-    var pass2 = pass2El.value;
-    if (!name || !pass) return alert('请填写用户名和密码');
-    if (pass.length < 6) return alert('密码至少 6 位');
-    if (pass !== pass2) return alert('两次输入的密码不一致');
-    if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(name)) return alert('用户名只能包含字母、数字、下划线或中文');
-
-    // 由于用假邮箱，需要转义一下
-    var emailLocal = name.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
-    var email = emailLocal + '@oil.local';
-
-    var { data, error } = await sb.auth.signUp({
-      email: email,
-      password: pass,
-      options: { data: { username: name } }
-    });
-    if (error) {
-      if (error.message && error.message.indexOf('already') >= 0) return alert('该用户名已被注册');
-      return alert('注册失败：' + error.message + '\n\n如果提示邮箱确认问题，请在 Supabase 里关闭 Confirm email');
-    }
-
-    // 等待触发器创建 profile（可能有一点延迟）
-    await new Promise(function (r) { setTimeout(r, 800); });
-    await refreshFromServer();
+/* ============ 编辑资料弹窗 ============ */
+function openEditProfile(){
+  if(!myProfile)return;
+  var name=prompt('新的用户名（当前：'+myProfile.username+'）',myProfile.username);
+  if(name===null)return;
+  name=name.trim();
+  if(!name)return alert('用户名不能为空');
+  if(name===myProfile.username)return;
+  if(!/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(name))return alert('用户名只能包含字母、数字、下划线或中文');
+  if(findUserByName(name))return alert('该用户名已被占用');
+  sb.from('profiles').update({username:name}).eq('id',myProfile.id).then(function(r){
+    if(r.error)return alert('修改失败：'+r.error.message);
+    myProfile.username=name;
+    // 更新本地
+    for(var i=0;i<db.users.length;i++)if(db.users[i].id===myProfile.id)db.users[i].username=name;
+    alert('用户名已更新');
     render();
-    alert('注册成功，欢迎！');
+  });
+}
+
+function pickAvatar(){
+  var input=document.createElement('input');
+  input.type='file';input.accept='image/*';
+  input.onchange=function(){
+    if(input.files&&input.files[0])uploadAvatar(input.files[0]);
+  };
+  input.click();
+}
+
+async function uploadAvatar(file){
+  if(!myProfile)return;
+  if(file.size>2*1024*1024)return alert('头像不能超过 2MB');
+  var ext=(file.name.split('.').pop()||'png').toLowerCase();
+  var path=myProfile.id+'/'+Date.now()+'.'+ext;
+  var up=await sb.storage.from('avatars').upload(path,file,{upsert:true,cacheControl:'3600'});
+  if(up.error)return alert('上传失败：'+up.error.message);
+  var pub=sb.storage.from('avatars').getPublicUrl(path);
+  var url=pub.data.publicUrl;
+  var r=await sb.from('profiles').update({avatar_url:url}).eq('id',myProfile.id);
+  if(r.error)return alert('保存失败：'+r.error.message);
+  myProfile.avatarUrl=url;
+  for(var i=0;i<db.users.length;i++)if(db.users[i].id===myProfile.id)db.users[i].avatarUrl=url;
+  alert('头像已更新');
+  render();
+}
+
+/* ============ 主页 ============ */
+function homeView(){
+  var list;
+  if(db.contests.length===0){
+    list='<div class="card center"><p class="muted">还没有比赛，点击上方按钮创建一场吧</p></div>';
+  }else{
+    list=db.contests.map(function(c){
+      var cAdmin=canManage(c),count=c.participants.length;
+      return '<div class="contest-item" onclick="OIL.openContest(\''+c.id+'\')"><div>'+
+        '<h3>'+esc(c.title)+(cAdmin?' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>':'')+'</h3>'+
+        '<span class="muted">'+count+'/10 人 · 创建于 '+new Date(c.createdAt).toLocaleDateString()+'</span></div>'+
+        '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span></div>';
+    }).join('');
+  }
+  return '<div class="page-head"><h1>比赛列表</h1><button class="btn btn-primary" onclick="OIL.createContest()">+ 创建比赛</button></div>'+list;
+}
+
+async function createContest(){
+  var title=prompt('请输入比赛名称：');
+  if(!title||!title.trim())return;
+  if(!myProfile)return;
+  var newId=uid('c');
+  var c={id:newId,title:title.trim(),description:'',status:'draft',teamProblemLink:'',adminIds:[myProfile.id],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:myProfile.id,createdAt:Date.now()};
+  var r=await sb.from('contests').insert(contestToRow(c));
+  if(r.error)return alert('创建失败：'+r.error.message);
+  await refreshFromServer();
+  openContest(newId);
+}
+
+/* ============ 比赛页 ============ */
+function contestView(user){
+  var c=findContest(route.contestId);
+  if(!c)return '<div class="card"><p>比赛不存在</p><button class="btn" onclick="OIL.goHome()">返回</button></div>';
+  var manage=canManage(c);
+  var me=null;for(var j=0;j<c.participants.length;j++)if(c.participants[j].userId===user.id){me=c.participants[j];break;}
+  var amPending=c.pendingRequests.indexOf(user.id)>=0;
+
+  var html='<div class="page-head"><div>'+
+    '<button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button>'+
+    '<h1>'+esc(c.title)+'</h1></div>'+
+    '<div class="row">'+
+      (manage?'<button class="btn btn-ghost btn-sm" onclick="OIL.renameContest(\''+c.id+'\')">改名</button>':'')+
+      (manage?'<button class="btn btn-ghost btn-sm" onclick="OIL.deleteContest(\''+c.id+'\')">删除</button>':'')+
+      '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span>'+
+    '</div></div>';
+
+  if(c.description)html+='<div class="card intro-card"><h2>📖 比赛介绍</h2><div class="desc-text">'+esc(c.description)+'</div></div>';
+  else if(manage)html+='<div class="card intro-card"><p class="muted">尚未填写比赛介绍。在管理面板里可以添加。</p></div>';
+
+  if(!me&&c.status==='draft'){
+    var full=c.participants.length>=10;
+    if(amPending)html+='<div class="card"><p class="ok">⏳ 你已提交申请，等待管理员批准。</p><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="OIL.cancelApply(\''+c.id+'\')">取消申请</button></div>';
+    else if(!full)html+='<div class="card"><p>你还没有加入这场比赛（'+c.participants.length+'/10）。</p><button class="btn btn-primary" style="margin-top:10px" onclick="OIL.applyJoin(\''+c.id+'\')">📩 申请加入比赛</button></div>';
+    else html+='<div class="card"><p class="warn">⚠ 人数已满，无法加入。</p></div>';
   }
 
-  async function doLogin() {
-    var nameEl = document.getElementById('in-user');
-    var passEl = document.getElementById('in-pass');
-    if (!nameEl || !passEl) return;
-    var name = nameEl.value.trim();
-    var pass = passEl.value;
-    if (!name || !pass) return alert('请填写用户名和密码');
+  html+=matchupView(c);
 
-    var emailLocal = name.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase();
-    var email = emailLocal + '@oil.local';
+  if(c.status==='ongoing'&&me)html+=playPanel(c,me);
+  else if(c.status==='ongoing'&&!me)html+='<div class="card"><p class="muted">比赛正在进行，你是旁观者。</p></div>';
+  else if(me&&c.status==='draft')html+='<div class="card"><p class="muted">你已加入比赛，等待管理员宣布开始...</p><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="OIL.leaveContest(\''+c.id+'\')">退出比赛</button></div>';
+  else if(me&&c.status==='finished')html+='<div class="card"><p class="muted">比赛已结束。</p></div>';
 
-    var { error } = await sb.auth.signInWithPassword({ email: email, password: pass });
-    if (error) return alert('用户名或密码错误');
+  if(manage)html+=managePanel(c);
+  return html;
+}
 
-    await refreshFromServer();
-    route = { view: 'home', contestId: null };
-    render();
+function matchupView(c){
+  var A=c.participants.filter(function(p){return p.team==='A';});
+  var B=c.participants.filter(function(p){return p.team==='B';});
+  if(A.length===0&&B.length===0)return '';
+  function col(label,players,cls){
+    return '<div class="team-col"><h3><span class="tag '+cls+'">'+label+' 队</span></h3>'+
+      POS_ORDER.map(function(pos){
+        var p=null;for(var i=0;i<players.length;i++)if(players[i].position===pos){p=players[i];break;}
+        return '<div class="slot"><span class="pos">'+POS_NAMES[pos]+'</span>'+
+          '<span class="pname">'+(p?userLink(p.userId):'<span class="muted">—</span>')+'</span>'+
+          (p&&p.isLocked?'<span class="lock">🔒</span>':'')+'</div>';
+      }).join('')+'</div>';
+  }
+  return '<div class="card"><h2>对阵</h2><div class="matchup">'+col('A',A,'tag-a')+'<div class="vs">VS</div>'+col('B',B,'tag-b')+'</div></div>';
+}
+
+function playPanel(c,me){
+  var pos=me.position,url=(c.personalProblems&&c.personalProblems[pos])||'';
+  var html='<div class="card play-card"><h2>你的比赛面板</h2><div class="row" style="margin-bottom:14px">'+
+    '<span class="tag '+(me.team==='A'?'tag-a':'tag-b')+'">'+me.team+' 队</span>'+
+    '<span class="tag">'+(POS_NAMES[pos]||'未分配')+'</span></div>';
+  if(!me.isLocked){
+    html+='<h3>个人题</h3>'+
+      (url?'<a class="btn btn-primary" href="'+esc(url)+'" target="_blank" rel="noopener">前往答题 ↗</a>':'<p class="warn">管理员尚未设置本位置的题目链接</p>')+
+      '<div class="divider"></div><p class="muted">锁定后不可更改，将解锁团队题查看权限。</p>'+
+      '<button class="btn btn-danger" style="margin-top:10px" onclick="OIL.lockProblem(\''+c.id+'\')">🔒 锁定个人题</button>';
+  }else{
+    html+='<p class="ok">✅ 个人题已锁定，团队题已解锁</p><h3>团队题</h3>'+
+      (c.teamProblemLink?'<a class="btn btn-primary team-link-btn" href="'+esc(c.teamProblemLink)+'" target="_blank" rel="noopener">🚀 进入团队题比赛 ↗</a>':'<p class="warn">管理员尚未设置团队题链接，请稍候</p>');
+  }
+  return html+'</div>';
+}
+
+function lockProblem(id){
+  var c=findContest(id);if(!c)return;
+  var me=null;for(var j=0;j<c.participants.length;j++)if(c.participants[j].userId===myProfile.id){me=c.participants[j];break;}
+  if(!me||me.isLocked)return;
+  if(!confirm('锁定后无法修改，确认锁定个人题吗？'))return;
+  me.isLocked=true;me.lockedAt=Date.now();
+  saveDB();render();
+}
+
+/* ============ 管理面板 ============ */
+function managePanel(c){
+  if(!canManage(c))return '';
+  var desc='<h3>比赛介绍</h3><div class="field"><textarea id="desc-'+c.id+'" placeholder="写点什么介绍这场比赛...">'+esc(c.description||'')+'</textarea></div><button class="btn btn-sm" onclick="OIL.saveDescription(\''+c.id+'\')">保存介绍</button>';
+
+  var pending='';
+  if(c.pendingRequests.length>0){
+    pending='<h3>📩 待审批申请（'+c.pendingRequests.length+'）</h3><table><thead><tr><th>用户</th><th></th></tr></thead><tbody>'+
+      c.pendingRequests.map(function(uid2){
+        return '<tr><td>'+userLink(uid2)+'</td><td style="text-align:right">'+
+          '<button class="btn btn-success btn-sm" onclick="OIL.approveJoin(\''+c.id+'\',\''+uid2+'\')">批准</button> '+
+          '<button class="btn btn-ghost btn-sm" onclick="OIL.rejectJoin(\''+c.id+'\',\''+uid2+'\')">拒绝</button></td></tr>';
+      }).join('')+'</tbody></table><div class="divider"></div>';
   }
 
-  async function logout() {
-    try { await sb.auth.signOut(); } catch (e) {}
-    myProfile = null;
-    db = { users: [], contests: [] };
-    route = { view: 'home', contestId: null };
-    render();
-  }
-
-  function goHome() { route = { view: 'home', contestId: null }; render(); }
-  function openContest(id) { route = { view: 'contest', contestId: id }; render(); }
-
-  /* ==================== 主页 ==================== */
-  function homeView() {
-    var list;
-    if (db.contests.length === 0) {
-      list = '<div class="card center"><p class="muted">还没有比赛，点击上方按钮创建一场吧</p></div>';
-    } else {
-      list = db.contests.map(function (c) {
-        var cAdmin = canManage(c);
-        var count = c.participants.length;
-        return '<div class="contest-item" onclick="OIL.openContest(\'' + c.id + '\')">' +
-          '<div>' +
-            '<h3>' + esc(c.title) + (cAdmin ? ' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>' : '') + '</h3>' +
-            '<span class="muted">' + count + '/10 人 · 创建于 ' + new Date(c.createdAt).toLocaleDateString() + '</span>' +
-          '</div>' +
-          '<span class="status status-' + c.status + '">' + statusText(c.status) + '</span>' +
-        '</div>';
-      }).join('');
-    }
-    return '<div class="page-head">' +
-        '<h1>比赛列表</h1>' +
-        '<button class="btn btn-primary" onclick="OIL.createContest()">+ 创建比赛</button>' +
-      '</div>' + list;
-  }
-
-  async function createContest() {
-    var title = prompt('请输入比赛名称：');
-    if (!title || !title.trim()) return;
-    if (!myProfile) return;
-    var newId = uid('c');
-    var c = {
-      id: newId,
-      title: title.trim(),
-      description: '',
-      status: 'draft',
-      teamProblemLink: '',
-      adminIds: [myProfile.id],
-      personalProblems: { top: '', jug: '', mid: '', bot: '', sup: '' },
-      participants: [],
-      pendingRequests: [],
-      createdBy: myProfile.id,
-      createdAt: Date.now()
-    };
-    // 先写服务器，拿到 id 再跳转
-    var { error } = await sb.from('contests').insert(contestToRow(c));
-    if (error) return alert('创建失败：' + error.message);
-    await refreshFromServer();
-    openContest(newId);
-  }
-
-  /* ==================== 比赛页 ==================== */
-  function contestView(user) {
-    var c = findContest(route.contestId);
-    if (!c) return '<div class="card"><p>比赛不存在</p><button class="btn" onclick="OIL.goHome()">返回</button></div>';
-
-    var manage = canManage(c);
-    var me = null;
-    for (var j = 0; j < c.participants.length; j++) {
-      if (c.participants[j].userId === user.id) { me = c.participants[j]; break; }
-    }
-    var amPending = c.pendingRequests.indexOf(user.id) >= 0;
-
-    var html = '<div class="page-head">' +
-      '<div>' +
-        '<button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button>' +
-        '<h1>' + esc(c.title) + '</h1>' +
-      '</div>' +
-      '<div class="row">' +
-        (manage ? '<button class="btn btn-ghost btn-sm" onclick="OIL.renameContest(\'' + c.id + '\')">改名</button>' : '') +
-        (manage ? '<button class="btn btn-ghost btn-sm" onclick="OIL.deleteContest(\'' + c.id + '\')">删除</button>' : '') +
-        '<span class="status status-' + c.status + '">' + statusText(c.status) + '</span>' +
-      '</div>' +
-    '</div>';
-
-    if (c.description) {
-      html += '<div class="card intro-card">' +
-        '<h2>📖 比赛介绍</h2>' +
-        '<div class="desc-text">' + esc(c.description) + '</div>' +
-      '</div>';
-    } else if (manage) {
-      html += '<div class="card intro-card">' +
-        '<p class="muted">尚未填写比赛介绍。在管理面板里可以添加，所有访客都能看到。</p>' +
-      '</div>';
-    }
-
-    if (!me && c.status === 'draft') {
-      var full = c.participants.length >= 10;
-      if (amPending) {
-        html += '<div class="card">' +
-          '<p class="ok">⏳ 你已提交申请，等待管理员批准。</p>' +
-          '<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="OIL.cancelApply(\'' + c.id + '\')">取消申请</button>' +
-        '</div>';
-      } else if (!full) {
-        html += '<div class="card">' +
-          '<p>你还没有加入这场比赛（' + c.participants.length + '/10）。</p>' +
-          '<button class="btn btn-primary" style="margin-top:10px" onclick="OIL.applyJoin(\'' + c.id + '\')">📩 申请加入比赛</button>' +
-        '</div>';
-      } else {
-        html += '<div class="card"><p class="warn">⚠ 人数已满，无法加入。</p></div>';
-      }
-    }
-
-    html += matchupView(c);
-
-    if (c.status === 'ongoing' && me) {
-      html += playPanel(c, me);
-    } else if (c.status === 'ongoing' && !me) {
-      html += '<div class="card"><p class="muted">比赛正在进行，你是旁观者。</p></div>';
-    } else if (me && c.status === 'draft') {
-      html += '<div class="card">' +
-        '<p class="muted">你已加入比赛，等待管理员宣布开始...</p>' +
-        '<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="OIL.leaveContest(\'' + c.id + '\')">退出比赛</button>' +
-      '</div>';
-    } else if (me && c.status === 'finished') {
-      html += '<div class="card"><p class="muted">比赛已结束。</p></div>';
-    }
-
-    if (manage) html += managePanel(c);
-
-    return html;
-  }
-
-  function matchupView(c) {
-    var A = c.participants.filter(function (p) { return p.team === 'A'; });
-    var B = c.participants.filter(function (p) { return p.team === 'B'; });
-    if (A.length === 0 && B.length === 0) return '';
-
-    function col(label, players, cls) {
-      return '<div class="team-col">' +
-        '<h3><span class="tag ' + cls + '">' + label + ' 队</span></h3>' +
-        POS_ORDER.map(function (pos) {
-          var p = null;
-          for (var i = 0; i < players.length; i++) {
-            if (players[i].position === pos) { p = players[i]; break; }
-          }
-          return '<div class="slot">' +
-            '<span class="pos">' + POS_NAMES[pos] + '</span>' +
-            '<span class="pname">' + (p ? displayName(p.userId) : '<span class="muted">—</span>') + '</span>' +
-            (p && p.isLocked ? '<span class="lock">🔒</span>' : '') +
-          '</div>';
-        }).join('') +
-      '</div>';
-    }
-
-    return '<div class="card">' +
-      '<h2>对阵</h2>' +
-      '<div class="matchup">' +
-        col('A', A, 'tag-a') +
-        '<div class="vs">VS</div>' +
-        col('B', B, 'tag-b') +
-      '</div>' +
-    '</div>';
-  }
-
-  function playPanel(c, me) {
-    var pos = me.position;
-    var url = (c.personalProblems && c.personalProblems[pos]) || '';
-
-    var html = '<div class="card play-card">' +
-      '<h2>你的比赛面板</h2>' +
-      '<div class="row" style="margin-bottom:14px">' +
-        '<span class="tag ' + (me.team === 'A' ? 'tag-a' : 'tag-b') + '">' + me.team + ' 队</span>' +
-        '<span class="tag">' + (POS_NAMES[pos] || '未分配') + '</span>' +
-      '</div>';
-
-    if (!me.isLocked) {
-      html += '<h3>个人题</h3>' +
-        (url
-          ? '<a class="btn btn-primary" href="' + esc(url) + '" target="_blank" rel="noopener">前往答题 ↗</a>'
-          : '<p class="warn">管理员尚未设置本位置的题目链接</p>') +
-        '<div class="divider"></div>' +
-        '<p class="muted">锁定后不可更改，将解锁团队题查看权限。</p>' +
-        '<button class="btn btn-danger" style="margin-top:10px" onclick="OIL.lockProblem(\'' + c.id + '\')">🔒 锁定个人题</button>';
-    } else {
-      html += '<p class="ok">✅ 个人题已锁定，团队题已解锁</p>' +
-        '<h3>团队题</h3>' +
-        (c.teamProblemLink
-          ? '<a class="btn btn-primary team-link-btn" href="' + esc(c.teamProblemLink) + '" target="_blank" rel="noopener">🚀 进入团队题比赛 ↗</a>'
-          : '<p class="warn">管理员尚未设置团队题链接，请稍候</p>');
-    }
-
-    html += '</div>';
-    return html;
-  }
-
-  function lockProblem(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    var me = null;
-    for (var j = 0; j < c.participants.length; j++) {
-      if (c.participants[j].userId === myProfile.id) { me = c.participants[j]; break; }
-    }
-    if (!me || me.isLocked) return;
-    if (!confirm('锁定后无法修改，确认锁定个人题吗？')) return;
-    me.isLocked = true;
-    me.lockedAt = Date.now();
-    saveDB();
-    render();
-  }
-
-  /* ==================== 管理面板 ==================== */
-  function managePanel(c) {
-    if (!canManage(c)) return '';
-
-    var descSection = '<h3>比赛介绍</h3>' +
-      '<div class="field">' +
-        '<textarea id="desc-' + c.id + '" placeholder="写点什么介绍这场比赛，例如比赛时间、规则说明、报名要求等。所有访客都能看到。">' + esc(c.description || '') + '</textarea>' +
-      '</div>' +
-      '<button class="btn btn-sm" onclick="OIL.saveDescription(\'' + c.id + '\')">保存介绍</button>';
-
-    var pendingSection = '';
-    if (c.pendingRequests.length > 0) {
-      pendingSection = '<h3>📩 待审批申请（' + c.pendingRequests.length + '）</h3>' +
-        '<table><thead><tr><th>用户</th><th></th></tr></thead><tbody>' +
-        c.pendingRequests.map(function (uid2) {
-          return '<tr>' +
-            '<td>' + displayName(uid2) + '</td>' +
-            '<td style="text-align:right">' +
-              '<button class="btn btn-success btn-sm" onclick="OIL.approveJoin(\'' + c.id + '\',\'' + uid2 + '\')">批准</button> ' +
-              '<button class="btn btn-ghost btn-sm" onclick="OIL.rejectJoin(\'' + c.id + '\',\'' + uid2 + '\')">拒绝</button>' +
-            '</td>' +
-          '</tr>';
-        }).join('') +
-        '</tbody></table>' +
-        '<div class="divider"></div>';
-    }
-
-    var personal = '<h3>个人题链接（按位置）</h3>';
-    POS_ORDER.forEach(function (pos) {
-      personal += '<div class="field">' +
-        '<label>' + POS_NAMES[pos] + '</label>' +
-        '<input class="input" value="' + esc(c.personalProblems[pos] || '') + '" ' +
-          'placeholder="https://..." ' +
-          'onchange="OIL.setPersonalProblem(\'' + c.id + '\',\'' + pos + '\', this.value)">' +
-      '</div>';
-    });
-
-    var teamLink =
-      '<h3>团队题链接</h3>' +
-      '<p class="muted" style="margin-bottom:8px">选手锁定个人题后可见，可随时修改</p>' +
-      '<input class="input" value="' + esc(c.teamProblemLink || '') + '" ' +
-        'placeholder="https://..." ' +
-        'onchange="OIL.setTeamLink(\'' + c.id + '\', this.value)">';
-
-    var inContest = c.participants.map(function (p) { return p.userId; });
-    var candidates = db.users.filter(function (u) {
-      return !u.isBot && inContest.indexOf(u.id) < 0;
-    });
-
-    var addOptions = '<option value="">选择用户...</option>' +
-      candidates.map(function (u) { return '<option value="' + u.id + '">' + esc(u.username) + '</option>'; }).join('');
-
-    var addRow = '<div class="row" style="margin-top:10px">' +
-      '<select id="add-sel-' + c.id + '" style="flex:1">' + addOptions + '</select>' +
-      '<button class="btn btn-primary" onclick="OIL.addParticipant(\'' + c.id + '\')">添加</button>' +
-    '</div>';
-
-    var plist;
-    if (c.participants.length === 0) {
-      plist = '<p class="muted">暂无参赛者</p>';
-    } else {
-      plist = '<table><thead><tr><th>选手</th><th>队伍</th><th>位置</th><th></th></tr></thead><tbody>' +
-        c.participants.map(function (p) {
-          return '<tr>' +
-            '<td>' + displayName(p.userId) + '</td>' +
-            '<td>' +
-              '<select onchange="OIL.setTeam(\'' + c.id + '\',\'' + p.userId + '\', this.value)">' +
-                '<option value="">未分配</option>' +
-                '<option value="A"' + (p.team === 'A' ? ' selected' : '') + '>A</option>' +
-                '<option value="B"' + (p.team === 'B' ? ' selected' : '') + '>B</option>' +
-              '</select>' +
-            '</td>' +
-            '<td>' +
-              '<select onchange="OIL.setPosition(\'' + c.id + '\',\'' + p.userId + '\', this.value)">' +
-                '<option value="">未分配</option>' +
-                POS_ORDER.map(function (pos) {
-                  return '<option value="' + pos + '"' + (p.position === pos ? ' selected' : '') + '>' + POS_NAMES[pos] + '</option>';
-                }).join('') +
-              '</select>' +
-            '</td>' +
-            '<td><button class="btn btn-ghost btn-sm" onclick="OIL.removeParticipant(\'' + c.id + '\',\'' + p.userId + '\')">移除</button></td>' +
-          '</tr>';
-        }).join('') +
-      '</tbody></table>';
-    }
-
-    var errs = validateContest(c);
-    var canStart = errs.length === 0;
-
-    var groupTools =
-      '<h3>分组工具</h3>' +
-      '<div class="row">' +
-        '<button class="btn" onclick="OIL.drawTeams(\'' + c.id + '\')"' + (c.participants.length !== 10 ? ' disabled' : '') + '>🎲 随机抽签分组</button>' +
-        '<button class="btn btn-ghost" onclick="OIL.clearTeams(\'' + c.id + '\')">清空分组</button>' +
-      '</div>' +
-      (c.participants.length !== 10
-        ? '<p class="warn">需恰好 10 人才能抽签（当前 ' + c.participants.length + ' 人）</p>'
-        : '');
-
-    var controls = '';
-    if (c.status === 'draft') {
-      controls = '<h3>比赛控制</h3>' +
-        (errs.length
-          ? errs.map(function (e) { return '<p class="err">⚠ ' + e + '</p>'; }).join('')
-          : '<p class="ok">✅ 校验通过，可以开始</p>') +
-        '<button class="btn btn-primary" ' + (canStart ? '' : 'disabled') + ' onclick="OIL.startContest(\'' + c.id + '\')">🚀 宣布开始</button>';
-    } else if (c.status === 'ongoing') {
-      controls = '<h3>比赛控制</h3>' +
-        '<button class="btn btn-ghost" onclick="OIL.finishContest(\'' + c.id + '\')">结束比赛</button>';
-    } else if (c.status === 'finished') {
-      controls = '<h3>比赛控制</h3>' +
-        '<button class="btn btn-ghost" onclick="OIL.reopenContest(\'' + c.id + '\')">重新开放</button>';
-    }
-
-    var adminSection = '';
-    if (isWebmaster()) {
-      var adminUsers = c.adminIds.map(function (id) {
-        return '<span class="tag">' + displayName(id) + ' <a onclick="OIL.revokeAdmin(\'' + c.id + '\',\'' + id + '\')" style="color:#f87171">×</a></span>';
-      }).join('');
-
-      var otherUsers = db.users.filter(function (u) {
-        return !u.isBot && c.adminIds.indexOf(u.id) < 0 && u.id !== myProfile.id;
-      });
-      var opts = otherUsers.map(function (u) {
-        return '<option value="' + u.id + '">' + esc(u.username) + '</option>';
-      }).join('');
-
-      adminSection = '<div class="card">' +
-        '<h2>👑 站长权限：比赛管理员</h2>' +
-        '<div style="margin-bottom:12px">' + (adminUsers || '<span class="muted">暂无</span>') + '</div>' +
-        (otherUsers.length
-          ? '<div class="row">' +
-              '<select id="admin-sel-' + c.id + '" style="flex:1">' + opts + '</select>' +
-              '<button class="btn btn-primary" onclick="OIL.grantAdmin(\'' + c.id + '\')">授予管理权</button>' +
-            '</div>'
-          : '<p class="muted">没有其他可授予的用户</p>') +
-      '</div>';
-    }
-
-    return '<div class="card">' +
-      '<h2>⚙️ 管理面板</h2>' +
-      descSection +
-      '<div class="divider"></div>' +
-      pendingSection +
-      personal +
-      '<div class="divider"></div>' +
-      teamLink +
-      '<div class="divider"></div>' +
-      '<h3>参赛者（' + c.participants.length + '/10）</h3>' +
-      '<div class="row" style="margin-bottom:12px">' +
-        '<button class="btn" onclick="OIL.seedBots(\'' + c.id + '\')">🤖 一键生成 10 个人机并填充</button>' +
-        '<button class="btn btn-ghost" onclick="OIL.lockAll(\'' + c.id + '\')">🔒 让人机全部锁题</button>' +
-      '</div>' +
-      plist +
-      addRow +
-      '<div class="divider"></div>' +
-      groupTools +
-      '<div class="divider"></div>' +
-      controls +
-    '</div>' + adminSection;
-  }
-
-  /* ==================== 管理操作 ==================== */
-  function renameContest(id) {
-    var c = findContest(id); if (!c) return;
-    var t = prompt('新的比赛名称：', c.title);
-    if (!t || !t.trim()) return;
-    c.title = t.trim();
-    saveDB(); render();
-  }
-  async function deleteContest(id) {
-    if (!confirm('确定删除这场比赛吗？此操作不可恢复。')) return;
-    await deleteContestFromServer(id);
-    await refreshFromServer();
-    goHome();
-  }
-  function saveDescription(id) {
-    var c = findContest(id); if (!c) return;
-    var el = document.getElementById('desc-' + id);
-    if (!el) return;
-    c.description = el.value;
-    saveDB();
-    render();
-  }
-  function setPersonalProblem(id, pos, val) {
-    var c = findContest(id); if (!c) return;
-    c.personalProblems[pos] = val.trim();
-    saveDB();
-  }
-  function setTeamLink(id, val) {
-    var c = findContest(id); if (!c) return;
-    c.teamProblemLink = val.trim();
-    saveDB();
-  }
-  function addParticipant(id) {
-    var c = findContest(id); if (!c) return;
-    var sel = document.getElementById('add-sel-' + id);
-    if (!sel) return;
-    var userId = sel.value;
-    if (!userId) return;
-    if (c.participants.length >= 10) return alert('已有 10 人，无法再添加');
-    if (c.participants.some(function (p) { return p.userId === userId; })) return alert('该用户已在比赛中');
-    c.participants.push({ userId: userId, team: '', position: '', isLocked: false });
-    c.pendingRequests = c.pendingRequests.filter(function (x) { return x !== userId; });
-    saveDB(); render();
-  }
-  function removeParticipant(id, userId) {
-    var c = findContest(id); if (!c) return;
-    c.participants = c.participants.filter(function (p) { return p.userId !== userId; });
-    saveDB(); render();
-  }
-  function setTeam(id, userId, val) {
-    var c = findContest(id); if (!c) return;
-    var p = null;
-    for (var i = 0; i < c.participants.length; i++) {
-      if (c.participants[i].userId === userId) { p = c.participants[i]; break; }
-    }
-    if (!p) return;
-    if (val && c.participants.filter(function (x) { return x.team === val && x.userId !== userId; }).length >= 5) {
-      alert(val + ' 队已满 5 人');
-      render(); return;
-    }
-    p.team = val;
-    saveDB();
-  }
-  function setPosition(id, userId, val) {
-    var c = findContest(id); if (!c) return;
-    var p = null;
-    for (var i = 0; i < c.participants.length; i++) {
-      if (c.participants[i].userId === userId) { p = c.participants[i]; break; }
-    }
-    if (!p) return;
-    if (val && c.participants.some(function (x) { return x.team === p.team && x.position === val && x.userId !== userId; })) {
-      alert('该队伍中此位置已被占用');
-      render(); return;
-    }
-    p.position = val;
-    saveDB();
-  }
-  function clearTeams(id) {
-    var c = findContest(id); if (!c) return;
-    c.participants.forEach(function (p) { p.team = ''; p.position = ''; });
-    saveDB(); render();
-  }
-  function drawTeams(id) {
-    var c = findContest(id); if (!c) return;
-    if (c.participants.length !== 10) return alert('必须恰好 10 人才能抽签');
-    if (!confirm('将随机打乱 10 名选手并分成两队，确定吗？')) return;
-    var shuffled = shuffle(c.participants);
-    shuffled.forEach(function (p, i) {
-      p.team = i < 5 ? 'A' : 'B';
-      p.position = POS_ORDER[i % 5];
-    });
-    saveDB(); render();
-  }
-  function startContest(id) {
-    var c = findContest(id); if (!c) return;
-    var errs = validateContest(c);
-    if (errs.length) return alert('无法开始：\n' + errs.join('\n'));
-    if (!confirm('宣布开始后，选手将看到个人题并可以锁题。确定吗？')) return;
-    c.status = 'ongoing';
-    c.startedAt = Date.now();
-    saveDB(); render();
-  }
-  function finishContest(id) {
-    if (!confirm('确定结束比赛吗？')) return;
-    var c = findContest(id); if (!c) return;
-    c.status = 'finished';
-    c.finishedAt = Date.now();
-    saveDB(); render();
-  }
-  function reopenContest(id) {
-    var c = findContest(id); if (!c) return;
-    c.status = 'ongoing';
-    saveDB(); render();
-  }
-  function grantAdmin(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    var sel = document.getElementById('admin-sel-' + contestId);
-    if (!sel) return;
-    var userId = sel.value;
-    if (!userId) return;
-    if (c.adminIds.indexOf(userId) < 0) c.adminIds.push(userId);
-    saveDB(); render();
-  }
-  function revokeAdmin(contestId, userId) {
-    var c = findContest(contestId); if (!c) return;
-    if (userId === c.adminIds[0] && !confirm('这是比赛创建者，确定移除？')) return;
-    c.adminIds = c.adminIds.filter(function (x) { return x !== userId; });
-    saveDB(); render();
-  }
-
-  /* ==================== 申请加入 ==================== */
-  function applyJoin(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    if (!myProfile) return;
-    if (c.participants.some(function (p) { return p.userId === myProfile.id; })) return alert('你已在比赛中');
-    if (c.pendingRequests.indexOf(myProfile.id) >= 0) return alert('你已提交过申请');
-    if (c.participants.length >= 10) return alert('人数已满');
-    c.pendingRequests.push(myProfile.id);
-    saveDB(); render();
-  }
-  function cancelApply(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    c.pendingRequests = c.pendingRequests.filter(function (x) { return x !== myProfile.id; });
-    saveDB(); render();
-  }
-  function approveJoin(contestId, userId) {
-    var c = findContest(contestId); if (!c) return;
-    if (c.participants.length >= 10) return alert('人数已满，无法批准');
-    c.pendingRequests = c.pendingRequests.filter(function (x) { return x !== userId; });
-    if (!c.participants.some(function (p) { return p.userId === userId; })) {
-      c.participants.push({ userId: userId, team: '', position: '', isLocked: false });
-    }
-    saveDB(); render();
-  }
-  function rejectJoin(contestId, userId) {
-    var c = findContest(contestId); if (!c) return;
-    c.pendingRequests = c.pendingRequests.filter(function (x) { return x !== userId; });
-    saveDB(); render();
-  }
-  function leaveContest(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    if (!confirm('确定退出比赛吗？')) return;
-    c.participants = c.participants.filter(function (p) { return p.userId !== myProfile.id; });
-    saveDB(); render();
-  }
-
-  /* ==================== 人机 ==================== */
-  function seedBots(contestId) {
-    var c = findContest(contestId); if (!c) return;
-
-    var added = 0;
-    for (var i = 0; i < BOT_NAMES.length; i++) {
-      var botId = 'bot_' + (i + 1);
-      if (c.participants.some(function (p) { return p.userId === botId; })) continue;
-      if (c.participants.length >= 10) break;
-      c.participants.push({ userId: botId, team: '', position: '', isLocked: false });
-      added++;
-    }
-
-    var autoDrawn = false;
-    if (c.participants.length === 10) {
-      var shuffled = shuffle(c.participants);
-      shuffled.forEach(function (p, i) {
-        p.team = i < 5 ? 'A' : 'B';
-        p.position = POS_ORDER[i % 5];
-      });
-      autoDrawn = true;
-    }
-
-    saveDB(); render();
-    alert('已添加 ' + added + ' 个人机到比赛' + (autoDrawn ? '，并已随机分组' : '') + '。\n\n人机用户名：bot1 ~ bot10');
-  }
-
-  function lockAll(contestId) {
-    var c = findContest(contestId); if (!c) return;
-    if (!confirm('将把所有用户名以 bot 开头的参赛者设为已锁题，确定吗？')) return;
-    var n = 0;
-    c.participants.forEach(function (p) {
-      if (typeof p.userId === 'string' && p.userId.indexOf('bot_') === 0 && !p.isLocked) {
-        p.isLocked = true;
-        p.lockedAt = Date.now();
-        n++;
-      }
-    });
-    saveDB(); render();
-    alert('已将 ' + n + ' 个人机设为已锁题');
-  }
-
-  /* ==================== 校验 ==================== */
-  function validateContest(c) {
-    var errs = [];
-    if (c.participants.length !== 10) {
-      errs.push('参赛人数必须恰好为 10 人（当前 ' + c.participants.length + ' 人）');
-      return errs;
-    }
-    ['A', 'B'].forEach(function (team) {
-      var players = c.participants.filter(function (p) { return p.team === team; });
-      if (players.length !== 5) errs.push(team + ' 队必须有 5 人（当前 ' + players.length + ' 人）');
-      var used = {};
-      players.forEach(function (p) {
-        if (!p.position) errs.push(team + ' 队有选手未分配位置');
-        else if (used[p.position]) errs.push(team + ' 队位置 ' + POS_NAMES[p.position] + ' 重复');
-        else used[p.position] = true;
-      });
-    });
-    return errs;
-  }
-
-  /* ==================== 键盘 ==================== */
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !currentUser() && connected) {
-      if (authMode === 'login') doLogin();
-      else doRegister();
-    }
+  var personal='<h3>个人题链接（按位置）</h3>';
+  POS_ORDER.forEach(function(pos){
+    personal+='<div class="field"><label>'+POS_NAMES[pos]+'</label>'+
+      '<input class="input" value="'+esc(c.personalProblems[pos]||'')+'" placeholder="https://..." onchange="OIL.setPersonalProblem(\''+c.id+'\',\''+pos+'\', this.value)"></div>';
   });
 
-  /* ==================== 对外接口 ==================== */
-  window.OIL = {
-    goHome: goHome, openContest: openContest, logout: logout,
-    switchAuth: switchAuth, doLogin: doLogin, doRegister: doRegister,
-    createContest: createContest, renameContest: renameContest, deleteContest: deleteContest,
-    saveDescription: saveDescription, setPersonalProblem: setPersonalProblem, setTeamLink: setTeamLink,
-    addParticipant: addParticipant, removeParticipant: removeParticipant,
-    setTeam: setTeam, setPosition: setPosition, clearTeams: clearTeams, drawTeams: drawTeams,
-    startContest: startContest, finishContest: finishContest, reopenContest: reopenContest,
-    grantAdmin: grantAdmin, revokeAdmin: revokeAdmin, lockProblem: lockProblem,
-    seedBots: seedBots, lockAll: lockAll,
-    applyJoin: applyJoin, cancelApply: cancelApply, approveJoin: approveJoin,
-    rejectJoin: rejectJoin, leaveContest: leaveContest
-  };
+  var teamLink='<h3>团队题链接</h3><p class="muted" style="margin-bottom:8px">选手锁定个人题后可见，可随时修改</p>'+
+    '<input class="input" value="'+esc(c.teamProblemLink||'')+'" placeholder="https://..." onchange="OIL.setTeamLink(\''+c.id+'\', this.value)">';
 
-  /* ==================== 启动 + 实时同步 ==================== */
-  async function boot() {
-    try {
-      await refreshFromServer();
-      render();
+  var inContest=c.participants.map(function(p){return p.userId;});
+  var candidates=db.users.filter(function(u){return !u.isBot&&inContest.indexOf(u.id)<0;});
+  var addOptions='<option value="">选择用户...</option>'+candidates.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+'</option>';}).join('');
+  var addRow='<div class="row" style="margin-top:10px"><select id="add-sel-'+c.id+'" style="flex:1">'+addOptions+'</select><button class="btn btn-primary" onclick="OIL.addParticipant(\''+c.id+'\')">添加</button></div>';
 
-      // 实时订阅：任何数据变化自动刷新
-      sb.channel('oil-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'contests' }, async function () {
-          await refreshFromServer();
-          render();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, async function () {
-          await refreshFromServer();
-          render();
-        })
-        .subscribe();
+  var plist;
+  if(c.participants.length===0)plist='<p class="muted">暂无参赛者</p>';
+  else plist='<table><thead><tr><th>选手</th><th>队伍</th><th>位置</th><th></th></tr></thead><tbody>'+
+    c.participants.map(function(p){
+      return '<tr><td>'+userLink(p.userId)+'</td>'+
+        '<td><select onchange="OIL.setTeam(\''+c.id+'\',\''+p.userId+'\', this.value)"><option value="">未分配</option><option value="A"'+(p.team==='A'?' selected':'')+'>A</option><option value="B"'+(p.team==='B'?' selected':'')+'>B</option></select></td>'+
+        '<td><select onchange="OIL.setPosition(\''+c.id+'\',\''+p.userId+'\', this.value)"><option value="">未分配</option>'+POS_ORDER.map(function(pos){return '<option value="'+pos+'"'+(p.position===pos?' selected':'')+'>'+POS_NAMES[pos]+'</option>';}).join('')+'</select></td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="OIL.removeParticipant(\''+c.id+'\',\''+p.userId+'\')">移除</button></td></tr>';
+    }).join('')+'</tbody></table>';
 
-      // 兜底轮询（每 5 秒）
-      setInterval(async function () {
-        await refreshFromServer();
-        render();
-      }, 5000);
+  var errs=validateContest(c);
+  var canStart=errs.length===0;
+  var groupTools='<h3>分组工具</h3><div class="row">'+
+    '<button class="btn" onclick="OIL.drawTeams(\''+c.id+'\')"'+(c.participants.length!==10?' disabled':'')+'>🎲 随机抽签分组</button>'+
+    '<button class="btn btn-ghost" onclick="OIL.clearTeams(\''+c.id+'\')">清空分组</button></div>'+
+    (c.participants.length!==10?'<p class="warn">需恰好 10 人才能抽签（当前 '+c.participants.length+' 人）</p>':'');
 
-      // 监听登录状态变化
-      sb.auth.onAuthStateChange(async function (event) {
-        if (event === 'SIGNED_OUT') {
-          myProfile = null;
-          db = { users: [], contests: [] };
-          render();
-        }
-      });
-    } catch (e) {
-      fatalEl.style.display = 'block';
-      fatalEl.textContent = '初始化失败：' + e.message + '\n' + (e.stack || '');
-    }
+  var controls='';
+  if(c.status==='draft'){
+    controls='<h3>比赛控制</h3>'+
+      (errs.length?errs.map(function(e){return '<p class="err">⚠ '+e+'</p>';}).join(''):'<p class="ok">✅ 校验通过，可以开始</p>')+
+      '<button class="btn btn-primary" '+(canStart?'':'disabled')+' onclick="OIL.startContest(\''+c.id+'\')">🚀 宣布开始</button>';
+  }else if(c.status==='ongoing'){
+    controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.finishContest(\''+c.id+'\')">结束比赛</button>';
+  }else if(c.status==='finished'){
+    controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.reopenContest(\''+c.id+'\')">重新开放</button>';
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
+  var adminSection='';
+  if(myProfile.isWebmaster){
+    var adminUsers=c.adminIds.map(function(id){return '<span class="tag">'+displayName(id)+' <a onclick="OIL.revokeAdmin(\''+c.id+'\',\''+id+'\')" style="color:#f87171">×</a></span>';}).join('');
+    var others=db.users.filter(function(u){return !u.isBot&&c.adminIds.indexOf(u.id)<0&&u.id!==myProfile.id;});
+    var opts=others.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+'</option>';}).join('');
+    adminSection='<div class="card"><h2>比赛管理员</h2><div style="margin-bottom:12px">'+(adminUsers||'<span class="muted">暂无</span>')+'</div>'+
+      (others.length?'<div class="row"><select id="admin-sel-'+c.id+'" style="flex:1">'+opts+'</select><button class="btn btn-primary" onclick="OIL.grantAdmin(\''+c.id+'\')">授予管理权</button></div>':'<p class="muted">没有其他可授予的用户</p>')+'</div>';
   }
+
+  return '<div class="card"><h2>⚙️ 管理面板</h2>'+desc+'<div class="divider"></div>'+pending+personal+'<div class="divider"></div>'+teamLink+'<div class="divider"></div>'+
+    '<h3>参赛者（'+c.participants.length+'/10）</h3>'+
+    '<div class="row" style="margin-bottom:12px">'+
+      '<button class="btn" onclick="OIL.seedBots(\''+c.id+'\')">🤖 一键生成 10 个人机并填充</button>'+
+      '<button class="btn btn-ghost" onclick="OIL.lockAll(\''+c.id+'\')">🔒 让人机全部锁题</button></div>'+
+    plist+addRow+'<div class="divider"></div>'+groupTools+'<div class="divider"></div>'+controls+'</div>'+adminSection;
+}
+
+/* ============ 管理操作 ============ */
+function renameContest(id){var c=findContest(id);if(!c)return;var t=prompt('新的比赛名称：',c.title);if(!t||!t.trim())return;c.title=t.trim();saveDB();render();}
+async function deleteContest(id){if(!confirm('确定删除这场比赛吗？'))return;await deleteContestFromServer(id);await refreshFromServer();goHome();}
+function saveDescription(id){var c=findContest(id);if(!c)return;var el=document.getElementById('desc-'+id);if(!el)return;c.description=el.value;saveDB();render();}
+function setPersonalProblem(id,pos,val){var c=findContest(id);if(!c)return;c.personalProblems[pos]=val.trim();saveDB();}
+function setTeamLink(id,val){var c=findContest(id);if(!c)return;c.teamProblemLink=val.trim();saveDB();}
+function addParticipant(id){
+  var c=findContest(id);if(!c)return;
+  var sel=document.getElementById('add-sel-'+id);if(!sel)return;
+  var userId=sel.value;if(!userId)return;
+  if(c.participants.length>=10)return alert('已有 10 人');
+  if(c.participants.some(function(p){return p.userId===userId;}))return alert('该用户已在比赛中');
+  c.participants.push({userId:userId,team:'',position:'',isLocked:false});
+  c.pendingRequests=c.pendingRequests.filter(function(x){return x!==userId;});
+  saveDB();render();
+}
+function removeParticipant(id,userId){var c=findContest(id);if(!c)return;c.participants=c.participants.filter(function(p){return p.userId!==userId;});saveDB();render();}
+function setTeam(id,userId,val){
+  var c=findContest(id);if(!c)return;
+  var p=null;for(var i=0;i<c.participants.length;i++)if(c.participants[i].userId===userId){p=c.participants[i];break;}
+  if(!p)return;
+  if(val&&c.participants.filter(function(x){return x.team===val&&x.userId!==userId;}).length>=5){alert(val+' 队已满 5 人');render();return;}
+  p.team=val;saveDB();
+}
+function setPosition(id,userId,val){
+  var c=findContest(id);if(!c)return;
+  var p=null;for(var i=0;i<c.participants.length;i++)if(c.participants[i].userId===userId){p=c.participants[i];break;}
+  if(!p)return;
+  if(val&&c.participants.some(function(x){return x.team===p.team&&x.position===val&&x.userId!==userId;})){alert('位置已被占用');render();return;}
+  p.position=val;saveDB();
+}
+function clearTeams(id){var c=findContest(id);if(!c)return;c.participants.forEach(function(p){p.team='';p.position='';});saveDB();render();}
+function drawTeams(id){
+  var c=findContest(id);if(!c)return;
+  if(c.participants.length!==10)return alert('必须恰好 10 人');
+  if(!confirm('将随机打乱 10 名选手并分成两队，确定吗？'))return;
+  var s=shuffle(c.participants);
+  s.forEach(function(p,i){p.team=i<5?'A':'B';p.position=POS_ORDER[i%5];});
+  saveDB();render();
+}
+function startContest(id){
+  var c=findContest(id);if(!c)return;
+  var errs=validateContest(c);if(errs.length)return alert('无法开始：\n'+errs.join('\n'));
+  if(!confirm('宣布开始？'))return;
+  c.status='ongoing';c.startedAt=Date.now();saveDB();render();
+}
+function finishContest(id){if(!confirm('确定结束？'))return;var c=findContest(id);if(!c)return;c.status='finished';c.finishedAt=Date.now();saveDB();render();}
+function reopenContest(id){var c=findContest(id);if(!c)return;c.status='ongoing';saveDB();render();}
+function grantAdmin(cid){
+  var c=findContest(cid);if(!c)return;
+  var sel=document.getElementById('admin-sel-'+cid);if(!sel)return;
+  var userId=sel.value;if(!userId)return;
+  if(c.adminIds.indexOf(userId)<0)c.adminIds.push(userId);
+  saveDB();render();
+}
+function revokeAdmin(cid,userId){
+  var c=findContest(cid);if(!c)return;
+  if(userId===c.adminIds[0]&&!confirm('这是比赛创建者，确定移除？'))return;
+  c.adminIds=c.adminIds.filter(function(x){return x!==userId;});
+  saveDB();render();
+}
+function applyJoin(id){
+  var c=findContest(id);if(!c||!myProfile)return;
+  if(c.participants.some(function(p){return p.userId===myProfile.id;}))return alert('你已在比赛中');
+  if(c.pendingRequests.indexOf(myProfile.id)>=0)return alert('你已提交过申请');
+  if(c.participants.length>=10)return alert('人数已满');
+  c.pendingRequests.push(myProfile.id);saveDB();render();
+}
+function cancelApply(id){var c=findContest(id);if(!c)return;c.pendingRequests=c.pendingRequests.filter(function(x){return x!==myProfile.id;});saveDB();render();}
+function approveJoin(id,userId){
+  var c=findContest(id);if(!c)return;
+  if(c.participants.length>=10)return alert('人数已满');
+  c.pendingRequests=c.pendingRequests.filter(function(x){return x!==userId;});
+  if(!c.participants.some(function(p){return p.userId===userId;}))c.participants.push({userId:userId,team:'',position:'',isLocked:false});
+  saveDB();render();
+}
+function rejectJoin(id,userId){var c=findContest(id);if(!c)return;c.pendingRequests=c.pendingRequests.filter(function(x){return x!==userId;});saveDB();render();}
+function leaveContest(id){if(!confirm('确定退出？'))return;var c=findContest(id);if(!c)return;c.participants=c.participants.filter(function(p){return p.userId!==myProfile.id;});saveDB();render();}
+function seedBots(id){
+  var c=findContest(id);if(!c)return;
+  var added=0;
+  for(var i=0;i<BOT_NAMES.length;i++){
+    var botId='bot_'+(i+1);
+    if(c.participants.some(function(p){return p.userId===botId;}))continue;
+    if(c.participants.length>=10)break;
+    c.participants.push({userId:botId,team:'',position:'',isLocked:false});
+    added++;
+  }
+  var autoDrawn=false;
+  if(c.participants.length===10){var s=shuffle(c.participants);s.forEach(function(p,i){p.team=i<5?'A':'B';p.position=POS_ORDER[i%5];});autoDrawn=true;}
+  saveDB();render();
+  alert('已添加 '+added+' 个人机'+(autoDrawn?'，并已随机分组':'')+'。\n\n人机用户名：bot1 ~ bot10');
+}
+function lockAll(id){
+  var c=findContest(id);if(!c)return;
+  if(!confirm('将所有 bot 参赛者设为已锁题？'))return;
+  var n=0;
+  c.participants.forEach(function(p){
+    if(typeof p.userId==='string'&&p.userId.indexOf('bot_')===0&&!p.isLocked){p.isLocked=true;p.lockedAt=Date.now();n++;}
+  });
+  saveDB();render();
+  alert('已将 '+n+' 个人机设为已锁题');
+}
+
+function validateContest(c){
+  var errs=[];
+  if(c.participants.length!==10){errs.push('参赛人数必须恰好为 10 人（当前 '+c.participants.length+' 人）');return errs;}
+  ['A','B'].forEach(function(team){
+    var players=c.participants.filter(function(p){return p.team===team;});
+    if(players.length!==5)errs.push(team+' 队必须有 5 人（当前 '+players.length+' 人）');
+    var used={};
+    players.forEach(function(p){
+      if(!p.position)errs.push(team+' 队有选手未分配位置');
+      else if(used[p.position])errs.push(team+' 队位置 '+POS_NAMES[p.position]+' 重复');
+      else used[p.position]=true;
+    });
+  });
+  return errs;
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!currentUser()&&connected){if(authMode==='login')doLogin();else doRegister();}
+});
+
+window.OIL={
+  goHome:goHome,openContest:openContest,logout:logout,switchAuth:switchAuth,
+  doLogin:doLogin,doRegister:doRegister,createContest:createContest,
+  renameContest:renameContest,deleteContest:deleteContest,saveDescription:saveDescription,
+  setPersonalProblem:setPersonalProblem,setTeamLink:setTeamLink,
+  addParticipant:addParticipant,removeParticipant:removeParticipant,
+  setTeam:setTeam,setPosition:setPosition,clearTeams:clearTeams,drawTeams:drawTeams,
+  startContest:startContest,finishContest:finishContest,reopenContest:reopenContest,
+  grantAdmin:grantAdmin,revokeAdmin:revokeAdmin,lockProblem:lockProblem,
+  seedBots:seedBots,lockAll:lockAll,
+  applyJoin:applyJoin,cancelApply:cancelApply,approveJoin:approveJoin,
+  rejectJoin:rejectJoin,leaveContest:leaveContest,
+  openProfile:openProfile,openEditProfile:openEditProfile,pickAvatar:pickAvatar
+};
+
+async function boot(){
+  try{
+    await refreshFromServer();render();
+    sb.channel('oil-changes')
+      .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();render();})
+      .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();render();})
+      .subscribe();
+    setInterval(async function(){await refreshFromServer();render();},5000);
+    sb.auth.onAuthStateChange(async function(event){
+      if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[]};render();}
+    });
+  }catch(e){fatalEl.style.display='block';fatalEl.textContent='初始化失败：'+e.message+'\n'+(e.stack||'');}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 </script>
 </body>
