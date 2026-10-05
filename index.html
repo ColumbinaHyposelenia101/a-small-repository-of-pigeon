@@ -216,6 +216,7 @@ function render(){
     '<main class="container">'+content+'</main>';
 }
 function safeRender(){
+  if(!myProfile)return;
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
   render();
@@ -715,15 +716,16 @@ window.OIL={
 
 async function boot(){
   try{
-    await refreshFromServer();render();
+    await refreshFromServer();
+    if(document.getElementById('app').innerHTML==='加载中…')render();
     sb.channel('oil-changes')
-  .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();safeRender();})
-  .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();safeRender();})
-  .subscribe();
+      .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();safeRender();})
+      .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();safeRender();})
+      .subscribe();
     sb.auth.onAuthStateChange(async function(event){
-      if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[]};render();}
+      if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[]};safeRender();}
     });
-  }catch(e){fatalEl.style.display='block';fatalEl.textContent='初始化失败：'+e.message+'\n'+(e.stack||'');}
+    }catch(e){fatalEl.style.display='block';fatalEl.textContent='初始化失败：'+e.message+'\n'+(e.stack||'');}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
