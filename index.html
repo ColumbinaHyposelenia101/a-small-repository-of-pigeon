@@ -7,7 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#0e1016;color:#e6e8ee;min-height:100vh;line-height:1.6}
+  html{background:#0e1016}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:transparent;color:#e6e8ee;min-height:100vh;line-height:1.6}
+  #app-background{position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;transition:background-image .3s ease}
   a{color:#818cf8;cursor:pointer;text-decoration:none}a:hover{text-decoration:underline}
   #fatal{position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 20px;font-family:monospace;font-size:13px;white-space:pre-wrap;display:none}
   .nav{background:#151824;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
@@ -151,9 +153,13 @@
   .notif-empty{padding:60px 24px;text-align:center;color:#7c8399;font-size:14px}
   .notif-cat-label{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;background:#232838;color:#a5b4fc;margin-right:6px}
   .notif-cat-contest{background:#3b0764;color:#e9d5ff}
+
+  /* 背景设置预览 */
+  .bg-preview-img{width:100%;height:240px;border-radius:10px;background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid #232838;margin-top:8px}
 </style>
 </head>
 <body>
+<div id="app-background"></div>
 <div id="fatal"></div>
 <div id="app">加载中…</div>
 <div id="modal-root"></div>
@@ -180,6 +186,10 @@ var route={view:'home',contestId:null,userId:null,notifCat:'all'};
 var authMode='login';
 var connected=false,syncing=false;
 var sidebarOpen=false;
+
+/* ====== 背景设置相关 ====== */
+var BG_STORAGE_KEY='oil_custom_bg';
+var BG_MAX_SIZE=2*1024*1024;
 
 function uid(p){return(p||'id')+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -231,7 +241,6 @@ function genTicketCode(){
 }
 
 /* ========== 用户名规则 ========== */
-// 拆分统计 ASCII（A-Za-z0-9_）和 Unicode（其他）
 function countChars(name){
   var a=0,u=0;
   Array.from(name).forEach(function(ch){
@@ -356,6 +365,56 @@ function unreadCount(cat){
   return n;
 }
 
+/* ========== 背景设置逻辑 ========== */
+function applyBackground(dataUrl){
+  var layer=document.getElementById('app-background');
+  if(!layer)return;
+  if(dataUrl){
+    layer.style.backgroundImage='url("'+dataUrl+'")';
+  }else{
+    layer.style.backgroundImage='';
+  }
+  // 更新设置页预览（如果当前在背景设置视图）
+  var preview=document.getElementById('bg-preview-img');
+  var box=document.getElementById('bg-preview-box');
+  if(preview&&box){
+    if(dataUrl){preview.style.backgroundImage='url("'+dataUrl+'")';box.style.display='block';}
+    else{preview.style.backgroundImage='';box.style.display='none';}
+  }
+}
+
+function initBackground(){
+  var saved=localStorage.getItem(BG_STORAGE_KEY);
+  applyBackground(saved||null);
+}
+
+function handleBgUpload(e){
+  var file=e.target.files&&e.target.files[0];
+  if(!file)return;
+  if(file.size>BG_MAX_SIZE){alert('图片太大！请选择小于 2MB 的图片。');e.target.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      localStorage.setItem(BG_STORAGE_KEY, ev.target.result);
+      applyBackground(ev.target.result);
+      alert('背景设置成功！');
+    }catch(err){
+      alert('存储失败：图片可能超出浏览器 localStorage 限制，请压缩后重试。');
+      console.error(err);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetBg(){
+  if(!confirm('确定恢复默认背景吗？'))return;
+  localStorage.removeItem(BG_STORAGE_KEY);
+  applyBackground(null);
+  var inp=document.getElementById('bg-upload-input');
+  if(inp)inp.value='';
+  alert('已恢复默认背景');
+}
+
 /* ========== 侧边栏 ========== */
 function toggleSidebar(){sidebarOpen=!sidebarOpen;render();}
 function closeSidebar(){sidebarOpen=false;render();}
@@ -378,6 +437,7 @@ function sidebarHTML(){
     links+='<div class="sidebar-link danger" onclick="OIL.openRevokeAdmin();OIL.closeSidebar()"><span class="ico">⬇️</span><span>撤销管理员</span></div>';
   }
   links+='<div class="sidebar-link" onclick="OIL.openProfile(\''+myProfile.id+'\');OIL.closeSidebar()"><span class="ico">👤</span><span>我的主页</span></div>';
+  links+='<div class="sidebar-link" onclick="OIL.goBgSettings();OIL.closeSidebar()"><span class="ico">🖼️</span><span>背景设置</span></div>';
 
   return '<div class="sidebar-mask'+(sidebarOpen?' open':'')+'" onclick="OIL.closeSidebar()"></div>'+
     '<aside class="sidebar'+(sidebarOpen?' open':'')+'">'+
@@ -403,6 +463,7 @@ function render(){
   else if(route.view==='profile')content=profileView(route.userId);
   else if(route.view==='tickets')content=ticketsView(route.ticketFilter);
   else if(route.view==='notifications')content=notificationsView(route.notifCat);
+  else if(route.view==='bg-settings')content=bgSettingsView();
   var unreadAll=unreadCount(null);
   var bellCls='bell-btn'+(route.view==='notifications'?' active':'');
   app.innerHTML=
@@ -420,6 +481,13 @@ function render(){
     '</div></header>'+
     '<main class="container">'+content+'</main>';
   if(pendingModal)renderModal();
+  // 渲染后同步一次预览区
+  if(route.view==='bg-settings'){
+    var saved=localStorage.getItem(BG_STORAGE_KEY);
+    var preview=document.getElementById('bg-preview-img');
+    var box=document.getElementById('bg-preview-box');
+    if(preview&&box&&saved){preview.style.backgroundImage='url("'+saved+'")';box.style.display='block';}
+  }
 }
 function safeRender(){
   if(!myProfile)return;
@@ -427,6 +495,24 @@ function safeRender(){
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
   render();
+}
+
+/* ========== 背景设置视图 ========== */
+function bgSettingsView(){
+  return '<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button><h1>🖼️ 背景设置</h1></div></div>'+
+    '<div class="card">'+
+      '<h2>自定义网站壁纸</h2>'+
+      '<p class="muted" style="margin-bottom:14px">上传一张图片作为网站最底层壁纸，保存在浏览器本地（localStorage），刷新和重新打开都不会丢失。建议图片小于 2MB，否则可能因存储超限导致设置失败。</p>'+
+      '<input type="file" id="bg-upload-input" accept="image/*" style="display:none" onchange="OIL.handleBgUpload(event)">'+
+      '<div class="row">'+
+        '<button class="btn btn-primary" onclick="document.getElementById(\'bg-upload-input\').click()">📁 选择图片上传</button>'+
+        '<button class="btn btn-ghost" onclick="OIL.resetBg()">🔄 恢复默认背景</button>'+
+      '</div>'+
+      '<div id="bg-preview-box" style="display:none;margin-top:20px">'+
+        '<p class="muted">当前自定义背景预览：</p>'+
+        '<div id="bg-preview-img" class="bg-preview-img"></div>'+
+      '</div>'+
+    '</div>';
 }
 
 /* ========== 登录/注册 ========== */
@@ -487,6 +573,7 @@ function openContest(id){route={view:'contest',contestId:id,userId:null,notifCat
 function openProfile(id){route={view:'profile',contestId:null,userId:id,notifCat:'all'};render();}
 function goTickets(filter){route={view:'tickets',contestId:null,userId:null,ticketFilter:filter||'all',notifCat:'all'};render();}
 function goNotifications(cat){route={view:'notifications',contestId:null,userId:null,notifCat:cat||'all'};render();}
+function goBgSettings(){route={view:'bg-settings',contestId:null,userId:null,notifCat:'all'};render();}
 
 /* ========== 弹窗 ========== */
 var pendingModal=null;
@@ -548,7 +635,9 @@ async function openNotification(id){
   if(!n)return;
   if(!n.isRead){
     n.isRead=true;
-    try{await sb.from('notifications').update({is_read:true}).eq('id',id);}catch(e){}
+    var r=await sb.from('notifications').update({is_read:true}).eq('id',id).select();
+    if(r.error){console.error('标记已读失败：'+r.error.message);n.isRead=false;}
+    else if(!r.data||r.data.length===0){console.error('标记已读未生效（RLS 拒绝或无匹配行）');n.isRead=false;}
   }
   if(n.linkView==='contest'&&n.linkId){
     var c=findContest(n.linkId);
@@ -564,7 +653,9 @@ async function markAllRead(){
   if(unread.length===0)return;
   unread.forEach(function(n){n.isRead=true;});
   var ids=unread.map(function(n){return n.id;});
-  try{await sb.from('notifications').update({is_read:true}).in('id',ids);}catch(e){}
+  var r=await sb.from('notifications').update({is_read:true}).in('id',ids).select();
+  if(r.error){console.error('全部已读失败：'+r.error.message);unread.forEach(function(n){n.isRead=false;});}
+  else if(!r.data||r.data.length===0){console.error('全部已读未生效（RLS 拒绝）');unread.forEach(function(n){n.isRead=false;});}
   render();
 }
 
@@ -1283,11 +1374,13 @@ window.OIL={
   openRevokeAdmin:openRevokeAdmin,revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
   goNotifications:goNotifications,openNotification:openNotification,markAllRead:markAllRead,
   toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
-  closeModal:closeModal
+  closeModal:closeModal,
+  goBgSettings:goBgSettings,handleBgUpload:handleBgUpload,resetBg:resetBg
 };
 
 async function boot(){
   try{
+    initBackground();
     await refreshFromServer();
     if(document.getElementById('app').innerHTML==='加载中…')render();
     sb.channel('oil-changes')
