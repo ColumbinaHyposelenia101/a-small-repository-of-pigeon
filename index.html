@@ -677,6 +677,8 @@ function profileView(userId){
 '</div>'+
       (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
       (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
+      (iAmWebmaster&&!isMe&&!isBot&&u.role==='admin'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="OIL.revokeAdminRole(\''+userId+'\')">⬇️ 撤销管理员</button></div>':'')+
+(iAmWebmaster&&!isMe&&!isBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
       '<div class="stats">'+
         '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
       '</div>'+
@@ -920,6 +922,36 @@ function submitAppointAdmin(){
   });
 }
 
+function revokeAdminRole(userId){
+  if(!isWebmaster())return alert('只有站长可以撤销管理员');
+  var u=findUserById(userId);if(!u)return;
+  if(u.isWebmaster)return alert('不能撤销站长');
+  if(u.role!=='admin')return alert('该用户不是管理员');
+  if(!confirm('确定撤销 '+u.username+'（#'+u.seq+'）的管理员权限吗？'))return;
+  sb.from('profiles').update({role:'user'}).eq('id',userId).select().single().then(function(r){
+    if(r.error)return alert('撤销失败：'+r.error.message);
+    if(!r.data)return alert('撤销失败：无权限（检查 RLS 策略）');
+    for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role='user';
+    alert('已撤销 '+u.username+' 的管理员权限');
+    render();
+  });
+}
+
+function promoteToAdmin(userId){
+  if(!isWebmaster())return alert('只有站长可以任命管理员');
+  var u=findUserById(userId);if(!u)return;
+  if(u.isWebmaster)return alert('该用户是站长');
+  if(u.role==='admin')return alert('该用户已经是管理员');
+  if(!confirm('确定任命 '+u.username+'（#'+u.seq+'）为管理员吗？'))return;
+  sb.from('profiles').update({role:'admin'}).eq('id',userId).select().single().then(function(r){
+    if(r.error)return alert('任命失败：'+r.error.message);
+    if(!r.data)return alert('任命失败：无权限（检查 RLS 策略）');
+    for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role='admin';
+    alert('已任命 '+u.username+' 为管理员');
+    render();
+  });
+}
+ 
 /* ========== 管理操作 ========== */
 function renameContest(id){var c=findContest(id);if(!c)return;var t=prompt('新的比赛名称：',c.title);if(!t||!t.trim())return;c.title=t.trim();saveDB();render();}
 async function deleteContest(id){if(!confirm('确定删除这场比赛吗？'))return;await deleteContestFromServer(id);await refreshFromServer();goHome();}
@@ -1073,6 +1105,7 @@ window.OIL={
   openTicketAdminRequest:openTicketAdminRequest,submitTicketAdminRequest:submitTicketAdminRequest,
   approveTicket:approveTicket,rejectTicket:rejectTicket,
   openAppointAdmin:openAppointAdmin,submitAppointAdmin:submitAppointAdmin,
+   revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
   toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
   closeModal:closeModal
 };
