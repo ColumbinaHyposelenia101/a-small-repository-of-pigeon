@@ -456,7 +456,7 @@ async function createContest(){
   if(!myProfile)return;
   var newId=uid('c');
   var c={id:newId,title:title.trim(),description:'',status:'draft',teamProblemLink:'',adminIds:[myProfile.id],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:myProfile.id,createdAt:Date.now()};
-  var r=await sb.from('contests').insert(contestToRow(c));
+  var r=await sb.from('contests').insert(contestToRow(c)).select().single();
   if(r.error)return alert('创建失败：'+r.error.message);
   await refreshFromServer();
   openContest(newId);
