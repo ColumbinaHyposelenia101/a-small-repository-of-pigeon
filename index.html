@@ -31,6 +31,8 @@
   .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:14px;color:#c7ccda;cursor:pointer;transition:.15s;margin-bottom:2px}
   .sidebar-link:hover{background:#232838;color:#e6e8ee}
   .sidebar-link .ico{width:20px;text-align:center;font-size:15px}
+  .sidebar-link.danger{color:#fca5a5}
+  .sidebar-link.danger:hover{background:#3f1d1d;color:#fecaca}
 
   .container{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
 
@@ -305,6 +307,7 @@ function sidebarHTML(){
   }
   if(isWM){
     links+='<div class="sidebar-link" onclick="OIL.openAppointAdmin();OIL.closeSidebar()"><span class="ico">👑</span><span>任命管理员</span></div>';
+    links+='<div class="sidebar-link danger" onclick="OIL.openRevokeAdmin();OIL.closeSidebar()"><span class="ico">⬇️</span><span>撤销管理员</span></div>';
   }
   links+='<div class="sidebar-link" onclick="OIL.openProfile(\''+myProfile.id+'\');OIL.closeSidebar()"><span class="ico">👤</span><span>我的主页</span></div>';
 
@@ -671,14 +674,14 @@ function profileView(userId){
     '<div class="profile-info">'+
       '<h1><span class="'+nameColorClass(u)+'">'+esc(u.username)+'</span>'+tagHTML+badges+'</h1>'+
       '<div class="meta">'+
-  (u.seq?'UID: <b style="color:#a5b4fc">#'+u.seq+'</b> · ':'')+
-  (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
-  '权限：<b style="color:'+(isPrivileged(u)?'#c084fc':'#7c8399')+'">'+(isPrivileged(u)?'管理员':'普通用户')+'</b>'
-'</div>'+
+        (u.seq?'UID: <b style="color:#a5b4fc">#'+u.seq+'</b> · ':'')+
+        (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
+        '权限：<b style="color:'+(isPrivileged(u)?'#c084fc':'#7c8399')+'">'+(isPrivileged(u)?'管理员':'普通用户')+'</b>'+
+      '</div>'+
       (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
       (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
       (iAmWebmaster&&!isMe&&!isBot&&u.role==='admin'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="OIL.revokeAdminRole(\''+userId+'\')">⬇️ 撤销管理员</button></div>':'')+
-(iAmWebmaster&&!isMe&&!isBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
+      (iAmWebmaster&&!isMe&&!isBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
       '<div class="stats">'+
         '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
       '</div>'+
@@ -868,7 +871,7 @@ async function approveTicket(id){
     var c={id:newId,title:t.contestTitle||'未命名比赛',description:'',status:'draft',teamProblemLink:'',adminIds:[t.applicantId],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:t.applicantId,createdAt:Date.now()};
     var r1=await sb.from('contests').insert(contestToRow(c)).select().single();
     if(r1.error)return alert('创建比赛失败：'+r1.error.message);
-if(r1.data)c.seq=r1.data.seq;
+    if(r1.data)c.seq=r1.data.seq;
   }else if(t.type==='contest_admin'){
     var c2=findContest(t.contestId);
     if(!c2)return alert('比赛不存在');
@@ -914,12 +917,39 @@ function submitAppointAdmin(){
   if(!confirm('确定任命 '+u.username+'（#'+u.seq+'）为社区管理员吗？'))return;
   sb.from('profiles').update({role:'admin'}).eq('id',u.id).select().single().then(function(r){
     if(r.error)return alert('任命失败：'+r.error.message);
-   (!r.data)return alert('任命失败：无权限修改该用户（检查 RLS 策略）');
+    if(!r.data)return alert('任命失败：无权限修改该用户（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===u.id)db.users[i].role='admin';
     closeModal();
     alert('已任命 '+u.username+' 为管理员');
     render();
   });
+}
+
+/* ========== 站长：撤销管理员（侧边栏入口） ========== */
+function openRevokeAdmin(){
+  if(!isWebmaster())return alert('只有站长可以撤销管理员');
+  var admins=db.users.filter(function(u){return !u.isBot&&!u.isWebmaster&&u.role==='admin';});
+  var listHTML='';
+  if(admins.length===0){
+    listHTML='<p class="muted" style="margin:12px 0">当前没有可撤销的管理员。</p>';
+  }else{
+    listHTML='<div style="max-height:240px;overflow-y:auto;margin:8px 0">';
+    admins.forEach(function(u){
+      listHTML+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#0e1016;border-radius:8px;margin-bottom:6px">'+
+        '<span><b class="name-admin">'+esc(u.username)+'</b> <span class="uid-text">#'+u.seq+'</span></span>'+
+        '<button class="btn btn-danger btn-sm" onclick="OIL.revokeAdminRole(\''+u.id+'\')">撤销</button>'+
+      '</div>';
+    });
+    listHTML+='</div>';
+  }
+  showModal('<div class="modal" onclick="event.stopPropagation()">'+
+    '<h2>⬇️ 撤销管理员</h2>'+
+    '<p class="muted" style="margin-bottom:10px">点击列表中的「撤销」按钮即可撤销该用户的管理员权限。</p>'+
+    listHTML+
+    '<div class="modal-btns">'+
+      '<button class="btn btn-ghost" onclick="OIL.closeModal()">关闭</button>'+
+    '</div>'+
+  '</div>');
 }
 
 function revokeAdminRole(userId){
@@ -933,6 +963,7 @@ function revokeAdminRole(userId){
     if(!r.data)return alert('撤销失败：无权限（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role='user';
     alert('已撤销 '+u.username+' 的管理员权限');
+    closeModal();
     render();
   });
 }
@@ -951,7 +982,7 @@ function promoteToAdmin(userId){
     render();
   });
 }
- 
+
 /* ========== 管理操作 ========== */
 function renameContest(id){var c=findContest(id);if(!c)return;var t=prompt('新的比赛名称：',c.title);if(!t||!t.trim())return;c.title=t.trim();saveDB();render();}
 async function deleteContest(id){if(!confirm('确定删除这场比赛吗？'))return;await deleteContestFromServer(id);await refreshFromServer();goHome();}
@@ -1105,7 +1136,7 @@ window.OIL={
   openTicketAdminRequest:openTicketAdminRequest,submitTicketAdminRequest:submitTicketAdminRequest,
   approveTicket:approveTicket,rejectTicket:rejectTicket,
   openAppointAdmin:openAppointAdmin,submitAppointAdmin:submitAppointAdmin,
-   revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
+  openRevokeAdmin:openRevokeAdmin,revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
   toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
   closeModal:closeModal
 };
