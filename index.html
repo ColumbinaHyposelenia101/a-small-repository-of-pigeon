@@ -11,12 +11,29 @@
   a{color:#818cf8;cursor:pointer;text-decoration:none}a:hover{text-decoration:underline}
   #fatal{position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 20px;font-family:monospace;font-size:13px;white-space:pre-wrap;display:none}
   .nav{background:#151824;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
-  .nav-inner{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+  .nav-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .nav-left{display:flex;align-items:center;gap:12px}
+  .hamburger{background:transparent;border:1px solid #2d3348;color:#e6e8ee;font-size:18px;padding:6px 12px;border-radius:8px;cursor:pointer;line-height:1}
+  .hamburger:hover{background:#232838}
   .brand{font-weight:700;font-size:18px;cursor:pointer}
   .nav-right{display:flex;align-items:center;gap:12px}
   .user-chip{background:#232838;padding:4px 12px 4px 4px;border-radius:20px;font-size:13px;color:#b8bece;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.15s}
   .user-chip:hover{background:#2d3348}
-  .container{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+
+  .sidebar-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:none}
+  .sidebar-mask.open{display:block}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:#151824;border-right:1px solid #232838;z-index:90;transform:translateX(-100%);transition:transform .22s ease}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-inner{padding:22px 18px;display:flex;flex-direction:column;height:100%;overflow-y:auto}
+  .sidebar-brand{font-weight:700;font-size:18px;margin-bottom:22px;cursor:pointer;padding-bottom:14px;border-bottom:1px solid #232838}
+  .sidebar-section{margin-bottom:18px}
+  .sidebar-title{font-size:11px;color:#7c8399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;padding-left:6px}
+  .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:14px;color:#c7ccda;cursor:pointer;transition:.15s;margin-bottom:2px}
+  .sidebar-link:hover{background:#232838;color:#e6e8ee}
+  .sidebar-link .ico{width:20px;text-align:center;font-size:15px}
+
+  .container{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid transparent;font-size:14px;cursor:pointer;font-family:inherit;background:#232838;color:#e6e8ee;transition:.15s;text-decoration:none}
   .btn:hover{background:#2d3348}
   .btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#7376f5}
@@ -70,13 +87,12 @@
   .desc-text{white-space:pre-wrap;color:#d1d5db}
   .intro-card{border-color:#4f46e5}
 
-  /* 用户名颜色 + 标签 */
   .name-admin{color:#c084fc;font-weight:600}
   .name-user{color:#e6e8ee}
-  .user-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;background:rgba(167,139,250,.2);color:#c084fc;margin-left:4px;vertical-align:middle}
+  .user-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;background:rgba(167,139,250,.2);color:#c084fc;margin-left:6px;vertical-align:middle}
   .user-tag-self{font-size:11px;color:#c084fc;margin-left:4px}
+  .uid-text{color:#7c8399;font-size:12px;font-family:monospace}
 
-  /* 个人主页 */
   .profile-card{background:linear-gradient(180deg,#1c2030 0,#151824 100%);border:1px solid #232838;border-radius:12px;padding:28px;margin-bottom:18px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
   .profile-avatar{width:120px;height:120px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;border:3px solid #232838}
   .profile-avatar img{width:100%;height:100%;object-fit:cover}
@@ -97,8 +113,8 @@
   .badge-webmaster{background:#5b21b6;color:#ddd6fe}
   .badge-admin{background:#3b0764;color:#e9d5ff}
   .badge-bot{background:#374151;color:#d1d5db}
+  .cid-badge{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;background:#232838;color:#a5b4fc;font-family:monospace;margin-left:6px}
 
-  /* 弹窗 */
   .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
   .modal{background:#151824;border:1px solid #232838;border-radius:14px;padding:26px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
   .modal h2{font-size:18px;margin-bottom:16px}
@@ -132,36 +148,40 @@ var myProfile=null;
 var route={view:'home',contestId:null,userId:null};
 var authMode='login';
 var connected=false,syncing=false;
+var sidebarOpen=false;
 
 function uid(p){return(p||'id')+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function findContest(id){for(var i=0;i<db.contests.length;i++)if(db.contests[i].id===id)return db.contests[i];return null;}
+function findContestByCid(cid){for(var i=0;i<db.contests.length;i++)if(Number(db.contests[i].seq)===Number(cid))return db.contests[i];return null;}
 function findUserById(id){for(var i=0;i<db.users.length;i++)if(db.users[i].id===id)return db.users[i];return null;}
+function findUserByUid(uidNum){for(var i=0;i<db.users.length;i++)if(Number(db.users[i].seq)===Number(uidNum))return db.users[i];return null;}
 function findUserByName(n){for(var i=0;i<db.users.length;i++)if(db.users[i].username===n)return db.users[i];return null;}
 function currentUser(){return myProfile;}
-function isWebmaster(){return !!(myProfile&&myProfile.isWebmaster);}
-function isCommunityAdmin(){return !!(myProfile&&(myProfile.isWebmaster||myProfile.role==='admin'));}
-function isPrivileged(u){return !!(u&&(u.isWebmaster||u.role==='admin'));}
+
+function isWebmaster(){if(!myProfile)return false;if(myProfile.isWebmaster)return true;if(myProfile.seq===1)return true;return false;}
+
+function isCommunityAdmin(){if(!myProfile)return false;if(myProfile.isWebmaster||myProfile.seq===1)return true;if(myProfile.role==='admin')return true;return false;}
+function isPrivileged(u){if(!u)return false;if(u.isWebmaster)return true;if(u.seq===1)return true;if(u.role==='admin'||u.role==='webmaster')return true;return false;}
 function canManage(c){if(!myProfile)return false;if(myProfile.isWebmaster)return true;return(c.adminIds||[]).indexOf(myProfile.id)>=0;}
 function statusText(s){return{draft:'准备中',ongoing:'进行中',finished:'已结束'}[s]||s;}
-
 function isBot(u){return !!(u&&u.isBot);}
 function nameColorClass(u){return isPrivileged(u)?'name-admin':'name-user';}
 
 function nameHTML(userId){
   var u=findUserById(userId);
   if(!u)return '<span class="ghost-user">未知用户</span>';
-  return '<a onclick="OIL.openProfile(\''+userId+'\')" class="'+nameColorClass(u)+'">'+esc(u.username)+'</a>';
+  var uidTxt=u.seq?'<span class="uid-text">#'+u.seq+'</span>':'';
+  return '<a onclick="OIL.openProfile(\''+userId+'\')" class="'+nameColorClass(u)+'">'+esc(u.username)+'</a> '+uidTxt;
 }
 function nameTagHTML(userId){
   var u=findUserById(userId);
   if(!u)return '<span class="ghost-user">未知用户</span>';
+  var uidTxt=u.seq?'<span class="uid-text">#'+u.seq+'</span>':'';
   var tag='';
-  if(!isBot(u)&&isPrivileged(u)){
-    tag='<span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
-  }
-  return '<a onclick="OIL.openProfile(\''+userId+'\')" class="'+nameColorClass(u)+'">'+esc(u.username)+'</a>'+tag;
+  if(!isBot(u)&&isPrivileged(u))tag='<span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
+  return '<a onclick="OIL.openProfile(\''+userId+'\')" class="'+nameColorClass(u)+'">'+esc(u.username)+'</a> '+uidTxt+tag;
 }
 function displayNamePlain(userId){
   var u=findUserById(userId);
@@ -177,6 +197,7 @@ function avatarHTML(user,size){
   }
   return '<div class="avatar-lg" style="width:'+size+'px;height:'+size+'px">'+initial+'</div>';
 }
+function cidOf(c){return c&&c.seq?c.seq:'?';}
 
 /* ========== 用户名规则 ========== */
 function unicodeLength(s){return Array.from(s).length;}
@@ -216,10 +237,10 @@ function cooldownText(u){
 }
 
 /* ========== 数据转换 ========== */
-function rowToContest(c){return{id:c.id,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
+function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
 function contestToRow(c){return{id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};}
-function rowToUser(u){return{id:u.id,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
-function rowToTicket(t){return{id:t.id,type:t.type,contestId:t.contest_id,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
+function rowToUser(u){return{id:u.id,seq:u.seq||0,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
+function rowToTicket(t){return{id:t.id,type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
 
 /* ========== 数据层 ========== */
 async function refreshFromServer(){
@@ -227,22 +248,21 @@ async function refreshFromServer(){
     var r=await sb.auth.getUser();
     var user=r.data.user;
     if(!user){myProfile=null;db={users:[],contests:[],tickets:[]};connected=true;return;}
-    var pr=await sb.from('profiles').select('id, username, is_webmaster, role, tag, avatar_url, name_changed_at, created_at');
+    var pr=await sb.from('profiles').select('id, seq, username, is_webmaster, role, tag, avatar_url, name_changed_at, created_at');
     if(pr.error)throw new Error('读取用户失败：'+pr.error.message);
     db.users=(pr.data||[]).map(rowToUser);
     for(var i=0;i<BOT_NAMES.length;i++){
       var botId='bot_'+(i+1);
-      if(!findUserById(botId))db.users.push({id:botId,username:BOT_NAMES[i],isWebmaster:false,role:'user',tag:'',isBot:true,avatarUrl:'',createdAt:0});
+      if(!findUserById(botId))db.users.push({id:botId,seq:0,username:BOT_NAMES[i],isWebmaster:false,role:'user',tag:'',isBot:true,avatarUrl:'',createdAt:0});
     }
     myProfile=null;
     for(var j=0;j<db.users.length;j++)if(db.users[j].id===user.id){myProfile=db.users[j];break;}
     if(!myProfile){
       var fallback=(user.email||'').split('@')[0]||'user';
       await sb.from('profiles').insert({id:user.id,username:fallback,is_webmaster:false,role:'user',login_email:user.email||''});
-      myProfile={id:user.id,username:fallback,isWebmaster:false,role:'user',tag:'管理员',avatarUrl:'',createdAt:Date.now()};
-      db.users.push(myProfile);
+      await refreshFromServer();return;
     }
-    var cr=await sb.from('contests').select('*').order('created_at',{ascending:false});
+    var cr=await sb.from('contests').select('*').order('seq',{ascending:true});
     if(cr.error)throw new Error('读取比赛失败：'+cr.error.message);
     db.contests=(cr.data||[]).map(rowToContest);
     var tr=await sb.from('tickets').select('*').order('created_at',{ascending:false});
@@ -265,6 +285,42 @@ async function pushAllContests(){
 async function deleteContestFromServer(id){if(!myProfile)return;var r=await sb.from('contests').delete().eq('id',id);if(r.error)console.error('删除失败：'+r.error.message);}
 function saveDB(){pushAllContests();}
 
+/* ========== 侧边栏 ========== */
+function toggleSidebar(){sidebarOpen=!sidebarOpen;render();}
+function closeSidebar(){sidebarOpen=false;render();}
+function sidebarHTML(){
+  if(!myProfile)return '';
+  var isAdmin=isCommunityAdmin();
+  var isWM=isWebmaster();
+  var links='';
+  links+='<div class="sidebar-link" onclick="OIL.goHome();OIL.closeSidebar()"><span class="ico">📋</span><span>比赛列表</span></div>';
+  if(!isAdmin){
+    links+='<div class="sidebar-link" onclick="OIL.openTicketCreate();OIL.closeSidebar()"><span class="ico">📝</span><span>申请创建比赛</span></div>';
+    links+='<div class="sidebar-link" onclick="OIL.openTicketAdminRequest();OIL.closeSidebar()"><span class="ico">🔑</span><span>申请管理权限</span></div>';
+  }else{
+    links+='<div class="sidebar-link" onclick="OIL.createContest();OIL.closeSidebar()"><span class="ico">➕</span><span>创建比赛</span></div>';
+    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'create_contest\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理比赛申请工单</span></div>';
+    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'contest_admin\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理权限申请工单</span></div>';
+  }
+  if(isWM){
+    links+='<div class="sidebar-link" onclick="OIL.openAppointAdmin();OIL.closeSidebar()"><span class="ico">👑</span><span>任命管理员</span></div>';
+  }
+  links+='<div class="sidebar-link" onclick="OIL.openProfile(\''+myProfile.id+'\');OIL.closeSidebar()"><span class="ico">👤</span><span>我的主页</span></div>';
+
+  return '<div class="sidebar-mask'+(sidebarOpen?' open':'')+'" onclick="OIL.closeSidebar()"></div>'+
+    '<aside class="sidebar'+(sidebarOpen?' open':'')+'">'+
+      '<div class="sidebar-inner">'+
+        '<div class="sidebar-brand" onclick="OIL.goHome();OIL.closeSidebar()">🎯 OIL 赛制管理器</div>'+
+        '<div class="sidebar-section">'+
+          '<div class="sidebar-title">导航</div>'+links+
+        '</div>'+
+        '<div class="sidebar-section" style="margin-top:auto;padding-top:16px;border-top:1px solid #232838">'+
+          '<div class="sidebar-link" onclick="OIL.logout()"><span class="ico">🚪</span><span>退出登录</span></div>'+
+        '</div>'+
+      '</div>'+
+    '</aside>';
+}
+
 /* ========== 渲染 ========== */
 function render(){
   var app=document.getElementById('app');if(!app)return;
@@ -275,18 +331,21 @@ function render(){
   if(route.view==='home')content=homeView();
   else if(route.view==='contest')content=contestView(user);
   else if(route.view==='profile')content=profileView(route.userId);
-  else if(route.view==='tickets')content=ticketsView();
+  else if(route.view==='tickets')content=ticketsView(route.ticketFilter);
   app.innerHTML=
+    sidebarHTML()+
     '<header class="nav"><div class="nav-inner">'+
-      '<div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div>'+
+      '<div class="nav-left">'+
+        '<button class="hamburger" onclick="OIL.toggleSidebar()">☰</button>'+
+        '<div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div>'+
+      '</div>'+
       '<div class="nav-right">'+
         '<div class="user-chip" onclick="OIL.openProfile(\''+user.id+'\')">'+
           avatarHTML(user,24)+
           '<span class="'+nameColorClass(user)+'">'+esc(user.username)+'</span>'+
+          (user.seq?'<span class="uid-text">#'+user.seq+'</span>':'')+
           (isPrivileged(user)?'<span class="user-tag-self">'+esc(user.tag||'管理员')+'</span>':'')+
         '</div>'+
-        (isCommunityAdmin()?'<button class="btn btn-ghost btn-sm" onclick="OIL.goTickets()">📩 工单</button>':'')+
-        '<button class="btn btn-ghost btn-sm" onclick="OIL.logout()">退出</button>'+
       '</div>'+
     '</div></header>'+
     '<main class="container">'+content+'</main>';
@@ -294,6 +353,7 @@ function render(){
 }
 function safeRender(){
   if(!myProfile)return;
+  if(sidebarOpen)return;
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
   render();
@@ -358,6 +418,7 @@ async function logout(){
   try{await sb.auth.signOut();}catch(e){}
   myProfile=null;db={users:[],contests:[],tickets:[]};
   route={view:'home',contestId:null,userId:null};
+  sidebarOpen=false;
   closeModal();
   render();
 }
@@ -365,7 +426,7 @@ async function logout(){
 function goHome(){route={view:'home',contestId:null,userId:null};render();}
 function openContest(id){route={view:'contest',contestId:id,userId:null};render();}
 function openProfile(id){route={view:'profile',contestId:null,userId:id};render();}
-function goTickets(){route={view:'tickets',contestId:null,userId:null};render();}
+function goTickets(filter){route={view:'tickets',contestId:null,userId:null,ticketFilter:filter||'all'};render();}
 
 /* ========== 弹窗 ========== */
 var pendingModal=null;
@@ -382,19 +443,16 @@ function homeView(){
     list=db.contests.map(function(c){
       var cAdmin=canManage(c),count=c.participants.length;
       return '<div class="contest-item" onclick="OIL.openContest(\''+c.id+'\')"><div>'+
-        '<h3>'+esc(c.title)+(cAdmin?' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>':'')+'</h3>'+
+        '<h3>'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span>'+(cAdmin?' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>':'')+'</h3>'+
         '<span class="muted">'+count+'/10 人 · 创建于 '+new Date(c.createdAt).toLocaleDateString()+'</span></div>'+
         '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span></div>';
     }).join('');
   }
-  var btnCreate=isCommunityAdmin()?
-    '<button class="btn btn-primary" onclick="OIL.createContest()">+ 创建比赛</button>':
-    '<button class="btn" onclick="OIL.openTicketCreate()">📩 申请创建比赛</button>';
-  return '<div class="page-head"><h1>比赛列表</h1>'+btnCreate+'</div>'+list;
+  return '<div class="page-head"><h1>比赛列表</h1></div>'+list;
 }
 
 async function createContest(){
-  if(!isCommunityAdmin())return alert('只有管理员和站长可以创建比赛，普通用户请提交工单申请');
+  if(!isCommunityAdmin())return alert('只有管理员和站长可以创建比赛，普通用户请通过侧边栏提交工单申请');
   var title=prompt('请输入比赛名称：');
   if(!title||!title.trim())return;
   if(!myProfile)return;
@@ -417,7 +475,7 @@ function contestView(user){
 
   var html='<div class="page-head"><div>'+
     '<button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button>'+
-    '<h1>'+esc(c.title)+'</h1></div>'+
+    '<h1>'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span></h1></div>'+
     '<div class="row">'+
       (manage?'<button class="btn btn-ghost btn-sm" onclick="OIL.renameContest(\''+c.id+'\')">改名</button>':'')+
       (manage?'<button class="btn btn-ghost btn-sm" onclick="OIL.deleteContest(\''+c.id+'\')">删除</button>':'')+
@@ -528,7 +586,7 @@ function managePanel(c){
 
   var inContest=c.participants.map(function(p){return p.userId;});
   var candidates=db.users.filter(function(u){return !u.isBot&&!isPrivileged(u)&&inContest.indexOf(u.id)<0;});
-  var addOptions='<option value="">选择用户...</option>'+candidates.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+'</option>';}).join('');
+  var addOptions='<option value="">选择用户...</option>'+candidates.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+(u.seq?' #'+u.seq:'')+'</option>';}).join('');
   var addRow='<div class="row" style="margin-top:10px"><select id="add-sel-'+c.id+'" style="flex:1">'+addOptions+'</select><button class="btn btn-primary" onclick="OIL.addParticipant(\''+c.id+'\')">添加</button></div>';
 
   var plist;
@@ -563,7 +621,7 @@ function managePanel(c){
   if(myProfile.isWebmaster){
     var adminUsers=c.adminIds.map(function(id){return '<span class="tag">'+displayNamePlain(id)+' <a onclick="OIL.revokeAdmin(\''+c.id+'\',\''+id+'\')" style="color:#f87171">×</a></span>';}).join('');
     var others=db.users.filter(function(u){return !u.isBot&&c.adminIds.indexOf(u.id)<0&&u.id!==myProfile.id;});
-    var opts=others.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+'</option>';}).join('');
+    var opts=others.map(function(u){return '<option value="'+u.id+'">'+esc(u.username)+(u.seq?' #'+u.seq:'')+'</option>';}).join('');
     adminSection='<div class="card"><h2>比赛管理员</h2><div style="margin-bottom:12px">'+(adminUsers||'<span class="muted">暂无</span>')+'</div>'+
       (others.length?'<div class="row"><select id="admin-sel-'+c.id+'" style="flex:1">'+opts+'</select><button class="btn btn-primary" onclick="OIL.grantAdmin(\''+c.id+'\')">授予管理权</button></div>':'<p class="muted">没有其他可授予的用户</p>')+'</div>';
   }
@@ -602,9 +660,7 @@ function profileView(userId){
   if(isBot)badges+=' <span class="badge badge-bot">人机</span>';
 
   var tagHTML='';
-  if(!isBot&&isPrivileged(u)){
-    tagHTML=' <span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
-  }
+  if(!isBot&&isPrivileged(u))tagHTML=' <span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
 
   html+='<div class="profile-card">'+
     '<div class="profile-avatar'+(isMe&&!isBot?' editable':'')+'" '+(isMe&&!isBot?'onclick="OIL.pickAvatar()"':'')+'>'+
@@ -614,16 +670,11 @@ function profileView(userId){
     '<div class="profile-info">'+
       '<h1><span class="'+nameColorClass(u)+'">'+esc(u.username)+'</span>'+tagHTML+badges+'</h1>'+
       '<div class="meta">'+
-        (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
-        'ID: '+esc(u.id.slice(0,12))
+        (u.seq?'UID: <b style="color:#a5b4fc">#'+u.seq+'</b> · ':'')+
+        (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString():'')
       '</div>'+
       (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
       (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
-      (iAmWebmaster&&!isBot&&!isMe?'<div class="row" style="margin-top:8px">'+
-        (u.role==='admin'?'<button class="btn btn-sm btn-ghost" onclick="OIL.setRole(\''+userId+'\',\'user\')">取消社区管理员</button>':
-        u.isWebmaster?'<span class="muted" style="font-size:12px">站长</span>':
-        '<button class="btn btn-sm btn-ghost" onclick="OIL.setRole(\''+userId+'\',\'admin\')">设为社区管理员</button>')+
-      '</div>':'')+
       '<div class="stats">'+
         '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
       '</div>'+
@@ -636,7 +687,7 @@ function profileView(userId){
       var c=p.contest,me=p.me;
       html+='<div class="list-row" onclick="OIL.openContest(\''+c.id+'\')">'+
         '<div style="flex:1">'+
-          '<div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'</div>'+
+          '<div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span></div>'+
           '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+'</div>'+
         '</div>'+
         '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span>'+
@@ -664,8 +715,7 @@ function openEditProfile(){
   var nowIso=new Date().toISOString();
   sb.from('profiles').update({username:name,name_changed_at:nowIso}).eq('id',myProfile.id).then(function(r){
     if(r.error)return alert('修改失败：'+r.error.message);
-    myProfile.username=name;
-    myProfile.nameChangedAt=nowIso;
+    myProfile.username=name;myProfile.nameChangedAt=nowIso;
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===myProfile.id){db.users[i].username=name;db.users[i].nameChangedAt=nowIso;}
     alert('用户名已更新');
     render();
@@ -683,19 +733,7 @@ function editTag(userId){
   sb.from('profiles').update({tag:t}).eq('id',userId).then(function(r){
     if(r.error)return alert('修改失败：'+r.error.message);
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].tag=t;
-    alert('tag 已更新');
-    render();
-  });
-}
-
-function setRole(userId,role){
-  if(!isWebmaster())return alert('只有站长可以分配权限');
-  if(!confirm('确定将该用户设为 '+(role==='admin'?'社区管理员':'普通用户')+' 吗？'))return;
-  sb.from('profiles').update({role:role}).eq('id',userId).then(function(r){
-    if(r.error)return alert('修改失败：'+r.error.message);
-    for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role=role;
-    alert('已更新');
-    render();
+    alert('tag 已更新');render();
   });
 }
 
@@ -720,14 +758,16 @@ async function uploadAvatar(file){
   if(r.error)return alert('保存失败：'+r.error.message);
   myProfile.avatarUrl=url;
   for(var i=0;i<db.users.length;i++)if(db.users[i].id===myProfile.id)db.users[i].avatarUrl=url;
-  alert('头像已更新');
-  render();
+  alert('头像已更新');render();
 }
 
 /* ========== 工单系统 ========== */
-function ticketsView(){
+function ticketsView(filter){
   if(!isCommunityAdmin())return '<div class="card"><p>无权访问</p></div>';
-  var list=db.tickets;
+  var all=db.tickets;
+  var list=all;
+  if(filter==='create_contest')list=all.filter(function(t){return t.type==='create_contest';});
+  else if(filter==='contest_admin')list=all.filter(function(t){return t.type==='contest_admin';});
   var pending=list.filter(function(t){return t.status==='pending';});
   var resolved=list.filter(function(t){return t.status!=='pending';});
 
@@ -735,14 +775,14 @@ function ticketsView(){
     var u=findUserById(t.applicantId);
     var typeText=t.type==='create_contest'?'申请创建比赛':'申请比赛管理权';
     var statusCls=t.status==='approved'?'ok':t.status==='rejected'?'err':'warn';
-    var statusText2=t.status==='approved'?'✅ 已批准':t.status==='rejected'?'❌ 已拒绝':'⏳ 待处理';
+    var statusTxt=t.status==='approved'?'✅ 已批准':t.status==='rejected'?'❌ 已拒绝':'⏳ 待处理';
     return '<div class="list-row" style="cursor:default;flex-direction:column;align-items:stretch;gap:8px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
         '<div><b>'+typeText+'</b> — '+(u?nameTagHTML(u.id):'未知用户')+'</div>'+
-        '<span class="'+statusCls+'" style="font-size:13px">'+statusText2+'</span>'+
+        '<span class="'+statusCls+'" style="font-size:13px">'+statusTxt+'</span>'+
       '</div>'+
       (t.contestTitle?'<div class="muted">比赛名：'+esc(t.contestTitle)+'</div>':'')+
-      (t.contestId?'<div class="muted">比赛 ID：'+esc(t.contestId)+'</div>':'')+
+      (t.contestSeq?'<div class="muted">CID：#'+t.contestSeq+'</div>':'')+
       (t.message?'<div class="muted">备注：'+esc(t.message)+'</div>':'')+
       (t.status==='pending'?'<div class="row">'+
         '<button class="btn btn-success btn-sm" onclick="OIL.approveTicket(\''+t.id+'\')">批准</button>'+
@@ -751,12 +791,17 @@ function ticketsView(){
     '</div>';
   }
 
-  return '<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button><h1>工单管理</h1></div></div>'+
+  var title=filter==='create_contest'?'比赛申请工单':filter==='contest_admin'?'权限申请工单':'工单管理';
+  var backBtn=filter&&filter!=='all'?'<button class="btn btn-ghost btn-sm" onclick="OIL.goTickets()">← 全部工单</button>':'';
+
+  return '<div class="page-head"><div>'+backBtn+'<h1>'+title+'</h1></div></div>'+
     '<div class="card"><h2>⏳ 待处理（'+pending.length+'）</h2>'+(pending.length?pending.map(row).join(''):'<p class="muted">暂无</p>')+'</div>'+
     (resolved.length?'<div class="card"><h2>历史记录</h2>'+resolved.map(row).join('')+'</div>':'');
 }
 
+/* ========== 普通用户：申请创建比赛 ========== */
 function openTicketCreate(){
+  if(isCommunityAdmin())return alert('你已经是管理员，可以直接创建比赛');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
     '<h2>📩 申请创建比赛</h2>'+
     '<div class="field"><label>想创建的比赛名称</label><input id="tk-title" class="input" placeholder="例如：周五夜 OIL"></div>'+
@@ -780,22 +825,30 @@ async function submitTicketCreate(){
   await refreshFromServer();render();
 }
 
-function openTicketContestAdmin(contestId){
-  var c=findContest(contestId);if(!c)return;
+/* ========== 普通用户：申请管理权限 ========== */
+function openTicketAdminRequest(){
+  if(isCommunityAdmin())return alert('你已经是管理员，不需要申请');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
-    '<h2>📩 申请比赛管理权</h2>'+
-    '<p class="muted" style="margin-bottom:12px">比赛：'+esc(c.title)+'</p>'+
+    '<h2>🔑 申请比赛管理权限</h2>'+
+    '<p class="muted" style="margin-bottom:12px">填写你想管理的比赛的 CID（比赛列表里显示的数字，比如 #1、#3）</p>'+
+    '<div class="field"><label>比赛 CID</label><input id="tk-cid" class="input" type="number" placeholder="例如：1"></div>'+
     '<div class="field"><label>备注（可选）</label><textarea id="tk-msg" placeholder="说明理由"></textarea></div>'+
     '<div class="modal-btns">'+
       '<button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button>'+
-      '<button class="btn btn-primary" onclick="OIL.submitTicketAdmin(\''+contestId+'\')">提交</button>'+
+      '<button class="btn btn-primary" onclick="OIL.submitTicketAdminRequest()">提交</button>'+
     '</div>'+
   '</div>');
 }
-async function submitTicketAdmin(contestId){
+async function submitTicketAdminRequest(){
+  var cidStr=(document.getElementById('tk-cid')||{}).value||'';
   var msg=(document.getElementById('tk-msg')||{}).value||'';
+  var cid=parseInt(cidStr,10);
+  if(!cid||isNaN(cid))return alert('请填写有效的 CID');
+  var c=findContestByCid(cid);
+  if(!c)return alert('找不到 CID 为 #'+cid+' 的比赛');
+  if((c.adminIds||[]).indexOf(myProfile.id)>=0)return alert('你已经是该比赛的管理员');
   var id=uid('t');
-  var r=await sb.from('tickets').insert({id:id,type:'contest_admin',contest_id:contestId,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
+  var r=await sb.from('tickets').insert({id:id,type:'contest_admin',contest_id:c.id,contest_seq:c.seq,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
   if(r.error)return alert('提交失败：'+r.error.message);
   closeModal();
   alert('工单已提交，等待管理员处理');
@@ -829,6 +882,38 @@ async function rejectTicket(id){
   if(r.error)return alert('失败：'+r.error.message);
   alert('已拒绝');
   await refreshFromServer();render();
+}
+
+/* ========== 站长：任命管理员 ========== */
+function openAppointAdmin(){
+  if(!isWebmaster())return alert('只有站长可以任命管理员');
+  showModal('<div class="modal" onclick="event.stopPropagation()">'+
+    '<h2>👑 任命管理员</h2>'+
+    '<p class="muted" style="margin-bottom:12px">输入要任命的用户的 UID（数字，比如 1、3），在用户主页能看到</p>'+
+    '<div class="field"><label>UID</label><input id="ap-uid" class="input" type="number" placeholder="例如：2"></div>'+
+    '<div class="modal-btns">'+
+      '<button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="OIL.submitAppointAdmin()">任命</button>'+
+    '</div>'+
+  '</div>');
+}
+function submitAppointAdmin(){
+  var uidStr=(document.getElementById('ap-uid')||{}).value||'';
+  var uidNum=parseInt(uidStr,10);
+  if(!uidNum||isNaN(uidNum))return alert('请填写有效的 UID');
+  var u=findUserByUid(uidNum);
+  if(!u)return alert('找不到 UID 为 #'+uidNum+' 的用户');
+  if(u.isBot)return alert('不能任命人机为管理员');
+  if(u.isWebmaster)return alert('该用户是站长');
+  if(u.role==='admin')return alert('该用户已经是管理员');
+  if(!confirm('确定任命 '+u.username+'（#'+u.seq+'）为社区管理员吗？'))return;
+  sb.from('profiles').update({role:'admin'}).eq('id',u.id).then(function(r){
+    if(r.error)return alert('任命失败：'+r.error.message);
+    for(var i=0;i<db.users.length;i++)if(db.users[i].id===u.id)db.users[i].role='admin';
+    closeModal();
+    alert('已任命 '+u.username+' 为管理员');
+    render();
+  });
 }
 
 /* ========== 管理操作 ========== */
@@ -940,7 +1025,6 @@ function lockAll(id){
   saveDB();render();
   alert('已将 '+n+' 个人机设为已锁题');
 }
-
 function validateContest(c){
   var errs=[];
   if(c.participants.length!==10){errs.push('参赛人数必须恰好为 10 人（当前 '+c.participants.length+' 人）');return errs;}
@@ -958,14 +1042,11 @@ function validateContest(c){
 }
 
 document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&sidebarOpen){closeSidebar();return;}
   if(e.key==='Enter'&&!currentUser()&&connected){
     var el=document.activeElement;
     if(el&&el.id==='in-user'){var p=document.getElementById('in-pass');if(p)p.focus();return;}
-    if(el&&el.id==='in-pass'){
-      if(authMode==='login'){doLogin();}
-      else{var p2=document.getElementById('in-pass2');if(p2)p2.focus();}
-      return;
-    }
+    if(el&&el.id==='in-pass'){if(authMode==='login'){doLogin();}else{var p2=document.getElementById('in-pass2');if(p2)p2.focus();}return;}
     if(el&&el.id==='in-pass2'){doRegister();return;}
   }
 });
@@ -983,10 +1064,12 @@ window.OIL={
   applyJoin:applyJoin,cancelApply:cancelApply,approveJoin:approveJoin,
   rejectJoin:rejectJoin,leaveContest:leaveContest,
   openProfile:openProfile,openEditProfile:openEditProfile,pickAvatar:pickAvatar,
-  editTag:editTag,setRole:setRole,
+  editTag:editTag,
   goTickets:goTickets,openTicketCreate:openTicketCreate,submitTicketCreate:submitTicketCreate,
-  openTicketContestAdmin:openTicketContestAdmin,submitTicketAdmin:submitTicketAdmin,
+  openTicketAdminRequest:openTicketAdminRequest,submitTicketAdminRequest:submitTicketAdminRequest,
   approveTicket:approveTicket,rejectTicket:rejectTicket,
+  openAppointAdmin:openAppointAdmin,submitAppointAdmin:submitAppointAdmin,
+  toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
   closeModal:closeModal
 };
 
