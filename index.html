@@ -240,6 +240,9 @@ function cooldownText(u){
 function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
 function contestToRow(c){var row={id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};if(c.seq&&c.seq>0)row.seq=c.seq;return row;}
 
+function rowToUser(u){return{id:u.id,seq:u.seq||0,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
+function rowToTicket(t){return{id:t.id,type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
+
 /* ========== 数据层 ========== */
 async function refreshFromServer(){
   try{
