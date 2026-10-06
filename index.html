@@ -7,14 +7,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-  html{background:#0e1016}
+  html{
+  background:#0e1016;
+  --card-alpha: 0.75;  /* 默认卡片透明度 75% */
+  --card-blur: 10px;   /* 默认毛玻璃模糊度 10px */
+}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:transparent;color:#e6e8ee;min-height:100vh;line-height:1.6}
   #app-background{position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;transition:background-image .3s ease}
   a{color:#818cf8;cursor:pointer;text-decoration:none}a:hover{text-decoration:underline}
   #fatal{position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 20px;font-family:monospace;font-size:13px;white-space:pre-wrap;display:none}
   
   /* 导航栏：半透明毛玻璃 */
-  .nav{background:rgba(21, 24, 36, 0.75);backdrop-filter:blur(10px);border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
+  .nav{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
   .nav-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
   .nav-left{display:flex;align-items:center;gap:12px}
   .hamburger{background:transparent;border:1px solid #2d3348;color:#e6e8ee;font-size:18px;padding:6px 12px;border-radius:8px;cursor:pointer;line-height:1}
@@ -34,7 +38,7 @@
   /* 侧边栏：半透明毛玻璃 */
   .sidebar-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:none}
   .sidebar-mask.open{display:block}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:rgba(21, 24, 36, 0.85);backdrop-filter:blur(12px);border-right:1px solid #232838;z-index:90;transform:translateX(-100%);transition:transform .22s ease}
+  .sidebar{background:rgba(21, 24, 36, calc(var(--card-alpha) + 0.1)) !important;backdrop-filter:blur(var(--card-blur)) !important;border-right:1px solid #232838;z-index:90;transform:translateX(-100%);transition:transform .22s ease}
   .sidebar.open{transform:translateX(0)}
   .sidebar-inner{padding:22px 18px;display:flex;flex-direction:column;height:100%;overflow-y:auto}
   .sidebar-brand{font-weight:700;font-size:18px;margin-bottom:22px;cursor:pointer;padding-bottom:14px;border-bottom:1px solid #232838}
@@ -61,7 +65,7 @@
   select{cursor:pointer}textarea{resize:vertical;min-height:90px}
   
   /* 卡片：半透明毛玻璃 */
-  .card{background:rgba(21, 24, 36, 0.75);backdrop-filter:blur(10px);border:1px solid #232838;border-radius:12px;padding:22px;margin-bottom:18px}
+  .card{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:12px;padding:22px;margin-bottom:18px}
   .card h2{font-size:17px;margin-bottom:14px}
   .card h3{font-size:14px;margin:18px 0 8px;color:#b8bece}
   .card h3:first-child{margin-top:0}
@@ -77,7 +81,7 @@
   .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
   
   /* 登录卡片：半透明毛玻璃 */
-  .auth-card{background:rgba(21, 24, 36, 0.85);backdrop-filter:blur(12px);border:1px solid #232838;border-radius:16px;padding:36px;width:100%;max-width:380px}
+  .auth-card{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:16px;padding:36px;width:100%;max-width:380px}
   .auth-card h1{font-size:22px;margin-bottom:6px}
   .auth-card .input{margin-bottom:12px}
   .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
@@ -135,7 +139,7 @@
 
   /* 弹窗：半透明毛玻璃 */
   .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .modal{background:rgba(21, 24, 36, 0.85);backdrop-filter:blur(12px);border:1px solid #232838;border-radius:14px;padding:26px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
+  .modal{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:14px;padding:26px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
   .modal h2{font-size:18px;margin-bottom:16px}
   .modal .field{margin-bottom:12px}
   .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
@@ -395,6 +399,18 @@ function applyBackground(dataUrl){
 function initBackground(){
   var saved=localStorage.getItem(BG_STORAGE_KEY);
   applyBackground(saved||null);
+  var savedAlpha = localStorage.getItem('oil_bg_alpha');
+  if (savedAlpha) {
+    document.documentElement.style.setProperty('--card-alpha', savedAlpha / 100);
+    var alphaSlider = document.getElementById('bg-alpha-slider');
+    if (alphaSlider) { alphaSlider.value = savedAlpha; document.getElementById('alpha-val').textContent = savedAlpha; }
+  }
+  var savedBlur = localStorage.getItem('oil_bg_blur');
+  if (savedBlur) {
+    document.documentElement.style.setProperty('--card-blur', savedBlur + 'px');
+    var blurSlider = document.getElementById('bg-blur-slider');
+    if (blurSlider) { blurSlider.value = savedBlur; document.getElementById('blur-val').textContent = savedBlur; }
+  }
 }
 
 function handleBgUpload(e){
@@ -511,11 +527,21 @@ function bgSettingsView(){
   return '<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button><h1>🖼️ 背景设置</h1></div></div>'+
     '<div class="card">'+
       '<h2>自定义网站壁纸</h2>'+
-      '<p class="muted" style="margin-bottom:14px">上传一张图片作为网站最底层壁纸，保存在浏览器本地（localStorage），刷新和重新打开都不会丢失。建议图片小于 2MB，否则可能因存储超限导致设置失败。</p>'+
+      '<p class="muted" style="margin-bottom:14px">上传一张图片作为网站最底层壁纸，保存在浏览器本地（localStorage），刷新和重新打开都不会丢失。</p>'+
       '<input type="file" id="bg-upload-input" accept="image/*" style="display:none" onchange="OIL.handleBgUpload(event)">'+
       '<div class="row">'+
         '<button class="btn btn-primary" onclick="document.getElementById(\'bg-upload-input\').click()">📁 选择图片上传</button>'+
         '<button class="btn btn-ghost" onclick="OIL.resetBg()">🔄 恢复默认背景</button>'+
+      '</div>'+
+      '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #232838">'+
+        '<div class="field">'+
+          '<label style="display:flex;justify-content:space-between">区域透明度（卡片/侧边栏）<span id="alpha-val" style="color:#a5b4fc">75</span>%</label>'+
+          '<input type="range" id="bg-alpha-slider" min="0" max="100" value="75" style="width:100%" oninput="OIL.updateBgAlpha(this.value)">'+
+        '</div>'+
+        '<div class="field" style="margin-top:16px">'+
+          '<label style="display:flex;justify-content:space-between">毛玻璃模糊度<span id="blur-val" style="color:#a5b4fc">10</span>px</label>'+
+          '<input type="range" id="bg-blur-slider" min="0" max="30" value="10" style="width:100%" oninput="OIL.updateBgBlur(this.value)">'+
+        '</div>'+
       '</div>'+
       '<div id="bg-preview-box" style="display:none;margin-top:20px">'+
         '<p class="muted">当前自定义背景预览：</p>'+
@@ -1369,6 +1395,8 @@ window.OIL={
   setPersonalProblem:setPersonalProblem,setTeamLink:setTeamLink,
   addParticipant:addParticipant,removeParticipant:removeParticipant,
   setTeam:setTeam,setPosition:setPosition,clearTeams:clearTeams,drawTeams:drawTeams,
+   updateBgAlpha: function(val) { document.documentElement.style.setProperty('--card-alpha', val / 100); document.getElementById('alpha-val').textContent = val; localStorage.setItem('oil_bg_alpha', val); },
+  updateBgBlur: function(val) { document.documentElement.style.setProperty('--card-blur', val + 'px'); document.getElementById('blur-val').textContent = val; localStorage.setItem('oil_bg_blur', val); },
   startContest:startContest,confirmFinishContest:confirmFinishContest,finalizeContest:finalizeContest,reopenContest:reopenContest,
   grantAdmin:grantAdmin,revokeAdmin:revokeAdmin,lockProblem:lockProblem,
   seedBots:seedBots,lockAll:lockAll,
