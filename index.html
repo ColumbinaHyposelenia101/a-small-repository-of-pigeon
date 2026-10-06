@@ -238,9 +238,7 @@ function cooldownText(u){
 
 /* ========== 数据转换 ========== */
 function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
-function contestToRow(c){return{id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};}
-function rowToUser(u){return{id:u.id,seq:u.seq||0,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
-function rowToTicket(t){return{id:t.id,type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
+function contestToRow(c){var row={id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};if(c.seq&&c.seq>0)row.seq=c.seq;return row;}
 
 /* ========== 数据层 ========== */
 async function refreshFromServer(){
@@ -862,8 +860,9 @@ async function approveTicket(id){
   if(t.type==='create_contest'){
     var newId=uid('c');
     var c={id:newId,title:t.contestTitle||'未命名比赛',description:'',status:'draft',teamProblemLink:'',adminIds:[t.applicantId],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:t.applicantId,createdAt:Date.now()};
-    var r1=await sb.from('contests').insert(contestToRow(c));
+    var r1=await sb.from('contests').insert(contestToRow(c)).select().single();
     if(r1.error)return alert('创建比赛失败：'+r1.error.message);
+if(r1.data)c.seq=r1.data.seq;
   }else if(t.type==='contest_admin'){
     var c2=findContest(t.contestId);
     if(!c2)return alert('比赛不存在');
