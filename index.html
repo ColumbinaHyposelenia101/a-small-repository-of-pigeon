@@ -28,11 +28,11 @@
   .sidebar-brand{font-weight:700;font-size:18px;margin-bottom:22px;cursor:pointer;padding-bottom:14px;border-bottom:1px solid #232838}
   .sidebar-section{margin-bottom:18px}
   .sidebar-title{font-size:11px;color:#7c8399;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;padding-left:6px}
-  .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:14px;color:#c7ccda;cursor:pointer;transition:.15s;margin-bottom:2px}
+  .sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:14px;color:#c7ccda;cursor:pointer;transition:.15s;margin-bottom:2px;position:relative}
   .sidebar-link:hover{background:#232838;color:#e6e8ee}
   .sidebar-link .ico{width:20px;text-align:center;font-size:15px}
+  .sidebar-link .badge-cnt{margin-left:auto;background:#ef4444;color:#fff;font-size:11px;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center;font-weight:600}
   .sidebar-link.danger{color:#fca5a5}
-  .sidebar-link.danger:hover{background:#3f1d1d;color:#fecaca}
 
   .container{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
 
@@ -122,6 +122,29 @@
   .modal h2{font-size:18px;margin-bottom:16px}
   .modal .field{margin-bottom:12px}
   .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
+  /* 通知中心 */
+  .notif-wrap{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start}
+  @media(max-width:640px){.notif-wrap{grid-template-columns:1fr}}
+  .notif-side{background:#151824;border:1px solid #232838;border-radius:12px;padding:8px;position:sticky;top:80px}
+  .notif-side-link{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;font-size:14px;color:#c7ccda;cursor:pointer;transition:.15s;margin-bottom:2px}
+  .notif-side-link:hover{background:#232838}
+  .notif-side-link.active{background:#232838;color:#e6e8ee;font-weight:600}
+  .notif-side-link .cnt{background:#6366f1;color:#fff;font-size:11px;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center;font-weight:600}
+  .notif-side-link .cnt.zero{background:#2d3348;color:#7c8399}
+  .notif-list{background:#151824;border:1px solid #232838;border-radius:12px;overflow:hidden}
+  .notif-item{padding:16px 20px;border-bottom:1px solid #232838;cursor:pointer;transition:.15s;position:relative}
+  .notif-item:last-child{border-bottom:none}
+  .notif-item:hover{background:#1c2030}
+  .notif-item.unread{background:rgba(99,102,241,.06)}
+  .notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#6366f1}
+  .notif-item .hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:10px}
+  .notif-item .ttl{font-weight:600;color:#e6e8ee;font-size:14px;line-height:1.4}
+  .notif-item .time{color:#7c8399;font-size:12px;white-space:nowrap;flex-shrink:0}
+  .notif-item .bd{color:#a9b1c4;font-size:13px;line-height:1.6;word-break:break-word}
+  .notif-empty{padding:60px 24px;text-align:center;color:#7c8399;font-size:14px}
+  .notif-cat-label{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;background:#232838;color:#a5b4fc;margin-right:6px}
+  .notif-cat-contest{background:#3b0764;color:#e9d5ff}
 </style>
 </head>
 <body>
@@ -145,9 +168,9 @@ var POS_NAMES={top:'TOP',jug:'JUG',mid:'MID',bot:'BOT',sup:'SUP'};
 var BOT_NAMES=['bot1','bot2','bot3','bot4','bot5','bot6','bot7','bot8','bot9','bot10'];
 var YEAR_MS=365*24*3600*1000, WEEK_MS=7*24*3600*1000;
 
-var db={users:[],contests:[],tickets:[]};
+var db={users:[],contests:[],tickets:[],notifications:[]};
 var myProfile=null;
-var route={view:'home',contestId:null,userId:null};
+var route={view:'home',contestId:null,userId:null,notifCat:'all'};
 var authMode='login';
 var connected=false,syncing=false;
 var sidebarOpen=false;
@@ -163,7 +186,6 @@ function findUserByName(n){for(var i=0;i<db.users.length;i++)if(db.users[i].user
 function currentUser(){return myProfile;}
 
 function isWebmaster(){if(!myProfile)return false;if(myProfile.isWebmaster)return true;if(myProfile.seq===1)return true;return false;}
-
 function isCommunityAdmin(){if(!myProfile)return false;if(myProfile.isWebmaster||myProfile.seq===1)return true;if(myProfile.role==='admin')return true;return false;}
 function isPrivileged(u){if(!u)return false;if(u.isWebmaster)return true;if(u.seq===1)return true;if(u.role==='admin'||u.role==='webmaster')return true;return false;}
 function canManage(c){if(!myProfile)return false;if(myProfile.isWebmaster)return true;return(c.adminIds||[]).indexOf(myProfile.id)>=0;}
@@ -171,12 +193,6 @@ function statusText(s){return{draft:'准备中',ongoing:'进行中',finished:'�
 function isBot(u){return !!(u&&u.isBot);}
 function nameColorClass(u){return isPrivileged(u)?'name-admin':'name-user';}
 
-function nameHTML(userId){
-  var u=findUserById(userId);
-  if(!u)return '<span class="ghost-user">未知用户</span>';
-  var uidTxt=u.seq?'<span class="uid-text">#'+u.seq+'</span>':'';
-  return '<a onclick="OIL.openProfile(\''+userId+'\')" class="'+nameColorClass(u)+'">'+esc(u.username)+'</a> '+uidTxt;
-}
 function nameTagHTML(userId){
   var u=findUserById(userId);
   if(!u)return '<span class="ghost-user">未知用户</span>';
@@ -201,6 +217,14 @@ function avatarHTML(user,size){
 }
 function cidOf(c){return c&&c.seq?c.seq:'?';}
 
+/* ========== 工单编号 ========== */
+function genTicketCode(){
+  var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  var code='';
+  for(var i=0;i<8;i++)code+=chars.charAt(Math.floor(Math.random()*chars.length));
+  return code;
+}
+
 /* ========== 用户名规则 ========== */
 function unicodeLength(s){return Array.from(s).length;}
 function isValidUsername(name,privileged){
@@ -213,12 +237,7 @@ function isValidUsername(name,privileged){
   }
   return null;
 }
-function getRenameCooldown(u){
-  if(!u)return 0;
-  if(u.isWebmaster)return 0;
-  if(u.role==='admin')return WEEK_MS;
-  return YEAR_MS;
-}
+function getRenameCooldown(u){if(!u)return 0;if(u.isWebmaster)return 0;if(u.role==='admin')return WEEK_MS;return YEAR_MS;}
 function canRename(u){
   if(!u)return{ok:false,msg:'未登录'};
   if(u.isWebmaster)return{ok:true};
@@ -232,25 +251,21 @@ function canRename(u){
   }
   return{ok:true};
 }
-function cooldownText(u){
-  if(u.isWebmaster)return'无限制';
-  if(u.role==='admin')return'每 7 天一次';
-  return'每 365 天一次';
-}
+function cooldownText(u){if(u.isWebmaster)return'无限制';if(u.role==='admin')return'每 7 天一次';return'每 365 天一次';}
 
 /* ========== 数据转换 ========== */
 function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
 function contestToRow(c){var row={id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};if(c.seq&&c.seq>0)row.seq=c.seq;return row;}
-
 function rowToUser(u){return{id:u.id,seq:u.seq||0,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
-function rowToTicket(t){return{id:t.id,type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
+function rowToTicket(t){return{id:t.id,code:t.code||'',type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
+function rowToNotif(n){return{id:n.id,userId:n.user_id,category:n.category,title:n.title,body:n.body||'',linkView:n.link_view,linkId:n.link_id,isRead:!!n.is_read,createdAt:new Date(n.created_at).getTime()};}
 
 /* ========== 数据层 ========== */
 async function refreshFromServer(){
   try{
     var r=await sb.auth.getUser();
     var user=r.data.user;
-    if(!user){myProfile=null;db={users:[],contests:[],tickets:[]};connected=true;return;}
+    if(!user){myProfile=null;db={users:[],contests:[],tickets:[],notifications:[]};connected=true;return;}
     var pr=await sb.from('profiles').select('id, seq, username, is_webmaster, role, tag, avatar_url, name_changed_at, created_at');
     if(pr.error)throw new Error('读取用户失败：'+pr.error.message);
     db.users=(pr.data||[]).map(rowToUser);
@@ -270,6 +285,8 @@ async function refreshFromServer(){
     db.contests=(cr.data||[]).map(rowToContest);
     var tr=await sb.from('tickets').select('*').order('created_at',{ascending:false});
     if(!tr.error)db.tickets=(tr.data||[]).map(rowToTicket);
+    var nr=await sb.from('notifications').select('*').order('created_at',{ascending:false}).limit(200);
+    if(!nr.error)db.notifications=(nr.data||[]).map(rowToNotif);
     connected=true;
   }catch(e){connected=false;console.error(e);}
 }
@@ -288,6 +305,42 @@ async function pushAllContests(){
 async function deleteContestFromServer(id){if(!myProfile)return;var r=await sb.from('contests').delete().eq('id',id);if(r.error)console.error('删除失败：'+r.error.message);}
 function saveDB(){pushAllContests();}
 
+/* ========== 通知工具 ========== */
+async function pushNotifications(list){
+  if(!list||list.length===0)return;
+  var rows=[];
+  for(var i=0;i<list.length;i++){
+    var item=list[i];
+    if(!item.userId)continue;
+    rows.push({
+      id:uid('n'),
+      user_id:item.userId,
+      category:item.category||'system',
+      title:item.title||'',
+      body:item.body||'',
+      link_view:item.linkView||null,
+      link_id:item.linkId||null,
+      is_read:false
+    });
+  }
+  if(rows.length===0)return;
+  try{
+    var r=await sb.from('notifications').insert(rows);
+    if(r.error)console.error('通知发送失败：'+r.error.message);
+  }catch(e){console.error(e);}
+}
+
+function unreadCount(cat){
+  var n=0;
+  for(var i=0;i<db.notifications.length;i++){
+    var x=db.notifications[i];
+    if(x.isRead)continue;
+    if(cat&&x.category!==cat)continue;
+    n++;
+  }
+  return n;
+}
+
 /* ========== 侧边栏 ========== */
 function toggleSidebar(){sidebarOpen=!sidebarOpen;render();}
 function closeSidebar(){sidebarOpen=false;render();}
@@ -295,8 +348,10 @@ function sidebarHTML(){
   if(!myProfile)return '';
   var isAdmin=isCommunityAdmin();
   var isWM=isWebmaster();
+  var unreadAll=unreadCount(null);
   var links='';
   links+='<div class="sidebar-link" onclick="OIL.goHome();OIL.closeSidebar()"><span class="ico">📋</span><span>比赛列表</span></div>';
+  links+='<div class="sidebar-link" onclick="OIL.goNotifications(\'all\');OIL.closeSidebar()"><span class="ico">🔔</span><span>通知中心</span>'+(unreadAll>0?'<span class="badge-cnt">'+unreadAll+'</span>':'')+'</div>';
   if(!isAdmin){
     links+='<div class="sidebar-link" onclick="OIL.openTicketCreate();OIL.closeSidebar()"><span class="ico">📝</span><span>申请创建比赛</span></div>';
     links+='<div class="sidebar-link" onclick="OIL.openTicketAdminRequest();OIL.closeSidebar()"><span class="ico">🔑</span><span>申请管理权限</span></div>';
@@ -315,9 +370,7 @@ function sidebarHTML(){
     '<aside class="sidebar'+(sidebarOpen?' open':'')+'">'+
       '<div class="sidebar-inner">'+
         '<div class="sidebar-brand" onclick="OIL.goHome();OIL.closeSidebar()">🎯 OIL 赛制管理器</div>'+
-        '<div class="sidebar-section">'+
-          '<div class="sidebar-title">导航</div>'+links+
-        '</div>'+
+        '<div class="sidebar-section"><div class="sidebar-title">导航</div>'+links+'</div>'+
         '<div class="sidebar-section" style="margin-top:auto;padding-top:16px;border-top:1px solid #232838">'+
           '<div class="sidebar-link" onclick="OIL.logout()"><span class="ico">🚪</span><span>退出登录</span></div>'+
         '</div>'+
@@ -336,21 +389,16 @@ function render(){
   else if(route.view==='contest')content=contestView(user);
   else if(route.view==='profile')content=profileView(route.userId);
   else if(route.view==='tickets')content=ticketsView(route.ticketFilter);
+  else if(route.view==='notifications')content=notificationsView(route.notifCat);
   app.innerHTML=
     sidebarHTML()+
     '<header class="nav"><div class="nav-inner">'+
-      '<div class="nav-left">'+
-        '<button class="hamburger" onclick="OIL.toggleSidebar()">☰</button>'+
-        '<div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div>'+
-      '</div>'+
-      '<div class="nav-right">'+
-        '<div class="user-chip" onclick="OIL.openProfile(\''+user.id+'\')">'+
-          avatarHTML(user,24)+
-          '<span class="'+nameColorClass(user)+'">'+esc(user.username)+'</span>'+
+      '<div class="nav-left"><button class="hamburger" onclick="OIL.toggleSidebar()">☰</button><div class="brand" onclick="OIL.goHome()">🎯 OIL 赛制管理器</div></div>'+
+      '<div class="nav-right"><div class="user-chip" onclick="OIL.openProfile(\''+user.id+'\')">'+
+          avatarHTML(user,24)+'<span class="'+nameColorClass(user)+'">'+esc(user.username)+'</span>'+
           (user.seq?'<span class="uid-text">#'+user.seq+'</span>':'')+
           (isPrivileged(user)?'<span class="user-tag-self">'+esc(user.tag||'管理员')+'</span>':'')+
-        '</div>'+
-      '</div>'+
+        '</div></div>'+
     '</div></header>'+
     '<main class="container">'+content+'</main>';
   if(pendingModal)renderModal();
@@ -366,15 +414,12 @@ function safeRender(){
 /* ========== 登录/注册 ========== */
 function authView(){
   if(authMode==='login'){
-    return '<div class="auth-card"><h1>🎯 OIL 赛制管理器</h1>'+
-      '<p class="muted" style="margin-bottom:20px">登录以继续</p>'+
-      '<input id="in-user" class="input" placeholder="用户名">'+
-      '<input id="in-pass" class="input" type="password" placeholder="密码">'+
+    return '<div class="auth-card"><h1>🎯 OIL 赛制管理器</h1><p class="muted" style="margin-bottom:20px">登录以继续</p>'+
+      '<input id="in-user" class="input" placeholder="用户名"><input id="in-pass" class="input" type="password" placeholder="密码">'+
       '<button class="btn btn-primary btn-block" onclick="OIL.doLogin()">登录</button>'+
       '<p class="muted center" style="margin-top:14px">还没有账号？<a onclick="OIL.switchAuth(\'register\')">注册</a></p></div>';
   }
-  return '<div class="auth-card"><h1>🎯 注册</h1>'+
-    '<p class="muted" style="margin-bottom:20px">用户名只能包含英文字母和下划线</p>'+
+  return '<div class="auth-card"><h1>🎯 注册</h1><p class="muted" style="margin-bottom:20px">用户名只能包含英文字母和下划线</p>'+
     '<input id="in-user" class="input" placeholder="用户名（英文字母/下划线）">'+
     '<input id="in-pass" class="input" type="password" placeholder="密码（至少 6 位）">'+
     '<input id="in-pass2" class="input" type="password" placeholder="确认密码">'+
@@ -394,14 +439,10 @@ async function doRegister(){
   if(findUserByName(name))return alert('用户名已存在');
   var email=name+'_oil@oil.local';
   var r=await sb.auth.signUp({email:email,password:pass,options:{data:{username:name}}});
-  if(r.error){
-    if(r.error.message&&r.error.message.indexOf('already')>=0)return alert('该用户名已被注册');
-    return alert('注册失败：'+r.error.message);
-  }
+  if(r.error){if(r.error.message&&r.error.message.indexOf('already')>=0)return alert('该用户名已被注册');return alert('注册失败：'+r.error.message);}
   await new Promise(function(rs){setTimeout(rs,800);});
   try{var u=await sb.auth.getUser();if(u.data.user)await sb.from('profiles').update({login_email:email}).eq('id',u.data.user.id);}catch(e){}
-  await refreshFromServer();render();
-  alert('注册成功，欢迎！');
+  await refreshFromServer();render();alert('注册成功，欢迎！');
 }
 
 async function doLogin(){
@@ -413,24 +454,21 @@ async function doLogin(){
   var email=(q.data&&q.data.login_email)?q.data.login_email:(name+'_oil@oil.local');
   var r=await sb.auth.signInWithPassword({email:email,password:pass});
   if(r.error)return alert('用户名或密码错误');
-  await refreshFromServer();
-  route={view:'home',contestId:null,userId:null};
-  render();
+  await refreshFromServer();route={view:'home',contestId:null,userId:null,notifCat:'all'};render();
 }
 
 async function logout(){
   try{await sb.auth.signOut();}catch(e){}
-  myProfile=null;db={users:[],contests:[],tickets:[]};
-  route={view:'home',contestId:null,userId:null};
-  sidebarOpen=false;
-  closeModal();
-  render();
+  myProfile=null;db={users:[],contests:[],tickets:[],notifications:[]};
+  route={view:'home',contestId:null,userId:null,notifCat:'all'};
+  sidebarOpen=false;closeModal();render();
 }
 
-function goHome(){route={view:'home',contestId:null,userId:null};render();}
-function openContest(id){route={view:'contest',contestId:id,userId:null};render();}
-function openProfile(id){route={view:'profile',contestId:null,userId:id};render();}
-function goTickets(filter){route={view:'tickets',contestId:null,userId:null,ticketFilter:filter||'all'};render();}
+function goHome(){route={view:'home',contestId:null,userId:null,notifCat:'all'};render();}
+function openContest(id){route={view:'contest',contestId:id,userId:null,notifCat:'all'};render();}
+function openProfile(id){route={view:'profile',contestId:null,userId:id,notifCat:'all'};render();}
+function goTickets(filter){route={view:'tickets',contestId:null,userId:null,ticketFilter:filter||'all',notifCat:'all'};render();}
+function goNotifications(cat){route={view:'notifications',contestId:null,userId:null,notifCat:cat||'all'};render();}
 
 /* ========== 弹窗 ========== */
 var pendingModal=null;
@@ -438,12 +476,87 @@ function closeModal(){pendingModal=null;document.getElementById('modal-root').in
 function showModal(html){pendingModal=html;document.getElementById('modal-root').innerHTML='<div class="modal-mask" onclick="if(event.target===this)OIL.closeModal()">'+html+'</div>';}
 function renderModal(){if(pendingModal)document.getElementById('modal-root').innerHTML='<div class="modal-mask" onclick="if(event.target===this)OIL.closeModal()">'+pendingModal+'</div>';}
 
+/* ========== 通知中心 ========== */
+function notificationsView(cat){
+  if(!myProfile)return '';
+  var all=db.notifications;
+  var list=all;
+  if(cat==='system')list=all.filter(function(n){return n.category==='system';});
+  else if(cat==='contest')list=all.filter(function(n){return n.category==='contest';});
+  var unreadAll=unreadCount(null);
+  var unreadSys=unreadCount('system');
+  var unreadCon=unreadCount('contest');
+
+  function sideLink(label,count,key){
+    var cls=route.notifCat===key?' active':'';
+    var cntCls=count>0?'':' zero';
+    return '<div class="notif-side-link'+cls+'" onclick="OIL.goNotifications(\''+key+'\')"><span>'+label+'</span><span class="cnt'+cntCls+'">'+count+'</span></div>';
+  }
+
+  var rows='';
+  if(list.length===0){
+    rows='<div class="notif-empty">📭<br><br>暂无通知</div>';
+  }else{
+    list.forEach(function(n){
+      var catCls=n.category==='contest'?' notif-cat-contest':'';
+      var catTxt=n.category==='contest'?'比赛':'系统';
+      var unreadCls=n.isRead?'':' unread';
+      var t=new Date(n.createdAt);
+      var timeStr=t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      rows+='<div class="notif-item'+unreadCls+'" onclick="OIL.openNotification(\''+n.id+'\')">'+
+        '<div class="hd">'+
+          '<div class="ttl"><span class="notif-cat-label'+catCls+'">'+catTxt+'</span>'+esc(n.title)+'</div>'+
+          '<div class="time">'+timeStr+'</div>'+
+        '</div>'+
+        (n.body?'<div class="bd">'+esc(n.body)+'</div>':'')+
+      '</div>';
+    });
+  }
+
+  return '<div class="page-head"><h1>🔔 通知中心</h1></div>'+
+    '<div class="notif-wrap">'+
+      '<div class="notif-side">'+
+        sideLink('全部通知',unreadAll,'all')+
+        sideLink('系统通知',unreadSys,'system')+
+        sideLink('比赛通知',unreadCon,'contest')+
+      '</div>'+
+      '<div class="notif-list">'+rows+'</div>'+
+    '</div>';
+}
+
+async function openNotification(id){
+  var n=null;
+  for(var i=0;i<db.notifications.length;i++)if(db.notifications[i].id===id){n=db.notifications[i];break;}
+  if(!n)return;
+  if(!n.isRead){
+    n.isRead=true;
+    try{await sb.from('notifications').update({is_read:true}).eq('id',id);}catch(e){}
+  }
+  if(n.linkView==='contest'&&n.linkId){
+    var c=findContest(n.linkId);
+    if(c){openContest(n.linkId);return;}
+  }
+  if(n.linkView==='tickets'){
+    goTickets(n.linkId||'all');return;
+  }
+  render();
+}
+
+async function markAllRead(){
+  if(!myProfile)return;
+  var unread=db.notifications.filter(function(n){return !n.isRead;});
+  if(unread.length===0)return;
+  unread.forEach(function(n){n.isRead=true;});
+  var ids=unread.map(function(n){return n.id;});
+  try{await sb.from('notifications').update({is_read:true}).in('id',ids);}catch(e){}
+  render();
+}
+
 /* ========== 主页 ========== */
 function homeView(){
   var list;
-  if(db.contests.length===0){
-    list='<div class="card center"><p class="muted">还没有比赛</p></div>';
-  }else{
+  if(db.contests.length===0){list='<div class="card center"><p class="muted">还没有比赛</p></div>';}
+  else{
     list=db.contests.map(function(c){
       var cAdmin=canManage(c),count=c.participants.length;
       return '<div class="contest-item" onclick="OIL.openContest(\''+c.id+'\')"><div>'+
@@ -464,8 +577,7 @@ async function createContest(){
   var c={id:newId,title:title.trim(),description:'',status:'draft',teamProblemLink:'',adminIds:[myProfile.id],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:myProfile.id,createdAt:Date.now()};
   var r=await sb.from('contests').insert(contestToRow(c)).select().single();
   if(r.error)return alert('创建失败：'+r.error.message);
-  await refreshFromServer();
-  openContest(newId);
+  await refreshFromServer();openContest(newId);
 }
 
 /* ========== 比赛页 ========== */
@@ -491,15 +603,10 @@ function contestView(user){
 
   if(!me&&c.status==='draft'){
     var full=c.participants.length>=10;
-    if(!canJoin.ok){
-      html+='<div class="card"><p class="warn">⚠ '+canJoin.msg+'</p></div>';
-    }else if(amPending){
-      html+='<div class="card"><p class="ok">⏳ 你已提交申请，等待管理员批准。</p><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="OIL.cancelApply(\''+c.id+'\')">取消申请</button></div>';
-    }else if(!full){
-      html+='<div class="card"><p>你还没有加入这场比赛（'+c.participants.length+'/10）。</p><button class="btn btn-primary" style="margin-top:10px" onclick="OIL.applyJoin(\''+c.id+'\')">📩 申请加入比赛</button></div>';
-    }else{
-      html+='<div class="card"><p class="warn">⚠ 人数已满，无法加入。</p></div>';
-    }
+    if(!canJoin.ok){html+='<div class="card"><p class="warn">⚠ '+canJoin.msg+'</p></div>';}
+    else if(amPending){html+='<div class="card"><p class="ok">⏳ 你已提交申请，等待管理员批准。</p><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="OIL.cancelApply(\''+c.id+'\')">取消申请</button></div>';}
+    else if(!full){html+='<div class="card"><p>你还没有加入这场比赛（'+c.participants.length+'/10）。</p><button class="btn btn-primary" style="margin-top:10px" onclick="OIL.applyJoin(\''+c.id+'\')">📩 申请加入比赛</button></div>';}
+    else{html+='<div class="card"><p class="warn">⚠ 人数已满，无法加入。</p></div>';}
   }
 
   html+=matchupView(c);
@@ -530,9 +637,7 @@ function matchupView(c){
     return '<div class="team-col"><h3><span class="tag '+cls+'">'+label+' 队</span></h3>'+
       POS_ORDER.map(function(pos){
         var p=null;for(var i=0;i<players.length;i++)if(players[i].position===pos){p=players[i];break;}
-        return '<div class="slot"><span class="pos">'+POS_NAMES[pos]+'</span>'+
-          '<span class="pname">'+(p?nameTagHTML(p.userId):'<span class="muted">—</span>')+'</span>'+
-          (p&&p.isLocked?'<span class="lock">🔒</span>':'')+'</div>';
+        return '<div class="slot"><span class="pos">'+POS_NAMES[pos]+'</span><span class="pname">'+(p?nameTagHTML(p.userId):'<span class="muted">—</span>')+'</span>'+(p&&p.isLocked?'<span class="lock">🔒</span>':'')+'</div>';
       }).join('')+'</div>';
   }
   return '<div class="card"><h2>对阵</h2><div class="matchup">'+col('A',A,'tag-a')+'<div class="vs">VS</div>'+col('B',B,'tag-b')+'</div></div>';
@@ -544,8 +649,7 @@ function playPanel(c,me){
     '<span class="tag '+(me.team==='A'?'tag-a':'tag-b')+'">'+me.team+' 队</span>'+
     '<span class="tag">'+(POS_NAMES[pos]||'未分配')+'</span></div>';
   if(!me.isLocked){
-    html+='<h3>个人题</h3>'+
-      (url?'<a class="btn btn-primary" href="'+esc(url)+'" target="_blank" rel="noopener">前往答题 ↗</a>':'<p class="warn">管理员尚未设置本位置的题目链接</p>')+
+    html+='<h3>个人题</h3>'+(url?'<a class="btn btn-primary" href="'+esc(url)+'" target="_blank" rel="noopener">前往答题 ↗</a>':'<p class="warn">管理员尚未设置本位置的题目链接</p>')+
       '<div class="divider"></div><p class="muted">锁定后不可更改，将解锁团队题查看权限。</p>'+
       '<button class="btn btn-danger" style="margin-top:10px" onclick="OIL.lockProblem(\''+c.id+'\')">🔒 锁定个人题</button>';
   }else{
@@ -560,8 +664,7 @@ function lockProblem(id){
   var me=null;for(var j=0;j<c.participants.length;j++)if(c.participants[j].userId===myProfile.id){me=c.participants[j];break;}
   if(!me||me.isLocked)return;
   if(!confirm('锁定后无法修改，确认锁定个人题吗？'))return;
-  me.isLocked=true;me.lockedAt=Date.now();
-  saveDB();render();
+  me.isLocked=true;me.lockedAt=Date.now();saveDB();render();
 }
 
 /* ========== 管理面板 ========== */
@@ -581,8 +684,7 @@ function managePanel(c){
 
   var personal='<h3>个人题链接（按位置）</h3>';
   POS_ORDER.forEach(function(pos){
-    personal+='<div class="field"><label>'+POS_NAMES[pos]+'</label>'+
-      '<input class="input" value="'+esc(c.personalProblems[pos]||'')+'" placeholder="https://..." onchange="OIL.setPersonalProblem(\''+c.id+'\',\''+pos+'\', this.value)"></div>';
+    personal+='<div class="field"><label>'+POS_NAMES[pos]+'</label><input class="input" value="'+esc(c.personalProblems[pos]||'')+'" placeholder="https://..." onchange="OIL.setPersonalProblem(\''+c.id+'\',\''+pos+'\', this.value)"></div>';
   });
 
   var teamLink='<h3>团队题链接</h3><p class="muted" style="margin-bottom:8px">选手锁定个人题后可见，可随时修改</p>'+
@@ -616,7 +718,7 @@ function managePanel(c){
       (errs.length?errs.map(function(e){return '<p class="err">⚠ '+e+'</p>';}).join(''):'<p class="ok">✅ 校验通过，可以开始</p>')+
       '<button class="btn btn-primary" '+(canStart?'':'disabled')+' onclick="OIL.startContest(\''+c.id+'\')">🚀 宣布开始</button>';
   }else if(c.status==='ongoing'){
-    controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.finishContest(\''+c.id+'\')">结束比赛</button>';
+    controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.confirmFinishContest(\''+c.id+'\')">结束比赛并判定胜负</button>';
   }else if(c.status==='finished'){
     controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.reopenContest(\''+c.id+'\')">重新开放</button>';
   }
@@ -657,20 +759,16 @@ function profileView(userId){
   }
 
   var html='<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button></div></div>';
-
   var badges='';
   if(u.isWebmaster)badges+=' <span class="badge badge-webmaster">站长</span>';
   else if(u.role==='admin')badges+=' <span class="badge badge-admin">管理员</span>';
   if(isBot)badges+=' <span class="badge badge-bot">人机</span>';
-
   var tagHTML='';
   if(!isBot&&isPrivileged(u))tagHTML=' <span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
 
   html+='<div class="profile-card">'+
     '<div class="profile-avatar'+(isMe&&!isBot?' editable':'')+'" '+(isMe&&!isBot?'onclick="OIL.pickAvatar()"':'')+'>'+
-      avatarInner+
-      (isMe&&!isBot?'<div class="overlay">点击更换</div>':'')+
-    '</div>'+
+      avatarInner+(isMe&&!isBot?'<div class="overlay">点击更换</div>':'')+'</div>'+
     '<div class="profile-info">'+
       '<h1><span class="'+nameColorClass(u)+'">'+esc(u.username)+'</span>'+tagHTML+badges+'</h1>'+
       '<div class="meta">'+
@@ -682,30 +780,23 @@ function profileView(userId){
       (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
       (iAmWebmaster&&!isMe&&!isBot&&u.role==='admin'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="OIL.revokeAdminRole(\''+userId+'\')">⬇️ 撤销管理员</button></div>':'')+
       (iAmWebmaster&&!isMe&&!isBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
-      '<div class="stats">'+
-        '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
-      '</div>'+
-    '</div>'+
-  '</div>';
+      '<div class="stats"><div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div></div>'+
+    '</div></div>';
 
   if(participated.length>0){
     html+='<div class="card"><h2>参赛记录</h2>';
     participated.forEach(function(p){
       var c=p.contest,me=p.me;
       html+='<div class="list-row" onclick="OIL.openContest(\''+c.id+'\')">'+
-        '<div style="flex:1">'+
-          '<div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span></div>'+
-          '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+'</div>'+
-        '</div>'+
-        '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span>'+
-      '</div>';
+        '<div style="flex:1"><div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span></div>'+
+        '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+'</div></div>'+
+        '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span></div>';
     });
     html+='</div>';
   }
   return html;
 }
 
-/* ========== 编辑用户名 ========== */
 function openEditProfile(){
   if(!myProfile)return;
   var check=canRename(myProfile);
@@ -724,8 +815,7 @@ function openEditProfile(){
     if(r.error)return alert('修改失败：'+r.error.message);
     myProfile.username=name;myProfile.nameChangedAt=nowIso;
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===myProfile.id){db.users[i].username=name;db.users[i].nameChangedAt=nowIso;}
-    alert('用户名已更新');
-    render();
+    alert('用户名已更新');render();
   });
 }
 
@@ -747,9 +837,7 @@ function editTag(userId){
 function pickAvatar(){
   var input=document.createElement('input');
   input.type='file';input.accept='image/*';
-  input.onchange=function(){
-    if(input.files&&input.files[0])uploadAvatar(input.files[0]);
-  };
+  input.onchange=function(){if(input.files&&input.files[0])uploadAvatar(input.files[0]);};
   input.click();
 }
 async function uploadAvatar(file){
@@ -785,16 +873,14 @@ function ticketsView(filter){
     var statusTxt=t.status==='approved'?'✅ 已批准':t.status==='rejected'?'❌ 已拒绝':'⏳ 待处理';
     return '<div class="list-row" style="cursor:default;flex-direction:column;align-items:stretch;gap:8px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<div><b>'+typeText+'</b> — '+(u?nameTagHTML(u.id):'未知用户')+'</div>'+
-        '<span class="'+statusCls+'" style="font-size:13px">'+statusTxt+'</span>'+
-      '</div>'+
+        '<div><b>'+typeText+'</b> <span class="uid-text">#'+esc(t.code||'--------')+'</span> — '+(u?nameTagHTML(u.id):'未知用户')+'</div>'+
+        '<span class="'+statusCls+'" style="font-size:13px">'+statusTxt+'</span></div>'+
       (t.contestTitle?'<div class="muted">比赛名：'+esc(t.contestTitle)+'</div>':'')+
       (t.contestSeq?'<div class="muted">CID：#'+t.contestSeq+'</div>':'')+
       (t.message?'<div class="muted">备注：'+esc(t.message)+'</div>':'')+
       (t.status==='pending'?'<div class="row">'+
         '<button class="btn btn-success btn-sm" onclick="OIL.approveTicket(\''+t.id+'\')">批准</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="OIL.rejectTicket(\''+t.id+'\')">拒绝</button>'+
-      '</div>':'')+
+        '<button class="btn btn-ghost btn-sm" onclick="OIL.rejectTicket(\''+t.id+'\')">拒绝</button></div>':'')+
     '</div>';
   }
 
@@ -806,17 +892,13 @@ function ticketsView(filter){
     (resolved.length?'<div class="card"><h2>历史记录</h2>'+resolved.map(row).join('')+'</div>':'');
 }
 
-/* ========== 普通用户：申请创建比赛 ========== */
 function openTicketCreate(){
   if(isCommunityAdmin())return alert('你已经是管理员，可以直接创建比赛');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
     '<h2>📩 申请创建比赛</h2>'+
     '<div class="field"><label>想创建的比赛名称</label><input id="tk-title" class="input" placeholder="例如：周五夜 OIL"></div>'+
     '<div class="field"><label>备注（可选）</label><textarea id="tk-msg" placeholder="说明理由"></textarea></div>'+
-    '<div class="modal-btns">'+
-      '<button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button>'+
-      '<button class="btn btn-primary" onclick="OIL.submitTicketCreate()">提交</button>'+
-    '</div>'+
+    '<div class="modal-btns"><button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button><button class="btn btn-primary" onclick="OIL.submitTicketCreate()">提交</button></div>'+
   '</div>');
 }
 async function submitTicketCreate(){
@@ -824,26 +906,26 @@ async function submitTicketCreate(){
   var msg=(document.getElementById('tk-msg')||{}).value||'';
   title=title.trim();
   if(!title)return alert('请填写比赛名称');
-  var id=uid('t');
-  var r=await sb.from('tickets').insert({id:id,type:'create_contest',contest_title:title,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
+  var id=uid('t'),code=genTicketCode();
+  var r=await sb.from('tickets').insert({id:id,code:code,type:'create_contest',contest_title:title,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
   if(r.error)return alert('提交失败：'+r.error.message);
+  // 通知所有社区管理员和站长
+  var admins=db.users.filter(function(u){return !u.isBot&&isPrivileged(u)&&u.id!==myProfile.id;});
+  var notifs=admins.map(function(a){return{userId:a.id,category:'system',title:'有新的比赛申请工单',body:myProfile.username+' 申请创建比赛「'+title+'」，工单编号 #'+code,linkView:'tickets',linkId:'create_contest'};});
+  pushNotifications(notifs);
   closeModal();
-  alert('工单已提交，等待管理员处理');
+  alert('工单已提交，编号 #'+code+'\n等待管理员处理');
   await refreshFromServer();render();
 }
 
-/* ========== 普通用户：申请管理权限 ========== */
 function openTicketAdminRequest(){
   if(isCommunityAdmin())return alert('你已经是管理员，不需要申请');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
     '<h2>🔑 申请比赛管理权限</h2>'+
-    '<p class="muted" style="margin-bottom:12px">填写你想管理的比赛的 CID（比赛列表里显示的数字，比如 #1、#3）</p>'+
+    '<p class="muted" style="margin-bottom:12px">填写你想管理的比赛的 CID</p>'+
     '<div class="field"><label>比赛 CID</label><input id="tk-cid" class="input" type="number" placeholder="例如：1"></div>'+
     '<div class="field"><label>备注（可选）</label><textarea id="tk-msg" placeholder="说明理由"></textarea></div>'+
-    '<div class="modal-btns">'+
-      '<button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button>'+
-      '<button class="btn btn-primary" onclick="OIL.submitTicketAdminRequest()">提交</button>'+
-    '</div>'+
+    '<div class="modal-btns"><button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button><button class="btn btn-primary" onclick="OIL.submitTicketAdminRequest()">提交</button></div>'+
   '</div>');
 }
 async function submitTicketAdminRequest(){
@@ -854,11 +936,14 @@ async function submitTicketAdminRequest(){
   var c=findContestByCid(cid);
   if(!c)return alert('找不到 CID 为 #'+cid+' 的比赛');
   if((c.adminIds||[]).indexOf(myProfile.id)>=0)return alert('你已经是该比赛的管理员');
-  var id=uid('t');
-  var r=await sb.from('tickets').insert({id:id,type:'contest_admin',contest_id:c.id,contest_seq:c.seq,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
+  var id=uid('t'),code=genTicketCode();
+  var r=await sb.from('tickets').insert({id:id,code:code,type:'contest_admin',contest_id:c.id,contest_seq:c.seq,applicant_id:myProfile.id,message:msg.trim(),status:'pending'});
   if(r.error)return alert('提交失败：'+r.error.message);
+  var admins=db.users.filter(function(u){return !u.isBot&&isPrivileged(u)&&u.id!==myProfile.id;});
+  var notifs=admins.map(function(a){return{userId:a.id,category:'system',title:'有新的权限申请工单',body:myProfile.username+' 申请管理比赛「'+c.title+'」（#'+c.seq+'），工单编号 #'+code,linkView:'tickets',linkId:'contest_admin'};});
+  pushNotifications(notifs);
   closeModal();
-  alert('工单已提交，等待管理员处理');
+  alert('工单已提交，编号 #'+code+'\n等待管理员处理');
   await refreshFromServer();render();
 }
 
@@ -866,43 +951,46 @@ async function approveTicket(id){
   var t=null;for(var i=0;i<db.tickets.length;i++)if(db.tickets[i].id===id){t=db.tickets[i];break;}
   if(!t)return;
   if(!confirm('确定批准这个工单吗？'))return;
+  var notifs=[];
   if(t.type==='create_contest'){
     var newId=uid('c');
     var c={id:newId,title:t.contestTitle||'未命名比赛',description:'',status:'draft',teamProblemLink:'',adminIds:[t.applicantId],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:t.applicantId,createdAt:Date.now()};
     var r1=await sb.from('contests').insert(contestToRow(c)).select().single();
     if(r1.error)return alert('创建比赛失败：'+r1.error.message);
     if(r1.data)c.seq=r1.data.seq;
+    notifs.push({userId:t.applicantId,category:'system',title:'您的工单 #'+t.code+' 已被完成',body:'管理员已批准您创建比赛「'+t.contestTitle+'」，比赛 CID #'+(c.seq||'?')+'。感谢你对网站做出的贡献。',linkView:'contest',linkId:newId});
   }else if(t.type==='contest_admin'){
     var c2=findContest(t.contestId);
     if(!c2)return alert('比赛不存在');
     if(c2.adminIds.indexOf(t.applicantId)<0)c2.adminIds.push(t.applicantId);
     var r2=await sb.from('contests').update({admin_ids:c2.adminIds}).eq('id',c2.id);
     if(r2.error)return alert('添加管理员失败：'+r2.error.message);
+    notifs.push({userId:t.applicantId,category:'system',title:'您的工单 #'+t.code+' 已被完成',body:'您已被授予管理比赛「'+c2.title+'」（#'+c2.seq+'）的权限。感谢你对网站做出的贡献。',linkView:'contest',linkId:c2.id});
   }
   var r3=await sb.from('tickets').update({status:'approved'}).eq('id',id);
   if(r3.error)return alert('更新工单状态失败：'+r3.error.message);
+  pushNotifications(notifs);
   alert('已批准');
   await refreshFromServer();render();
 }
 async function rejectTicket(id){
   if(!confirm('确定拒绝这个工单吗？'))return;
+  var t=null;for(var i=0;i<db.tickets.length;i++)if(db.tickets[i].id===id){t=db.tickets[i];break;}
+  if(!t)return;
   var r=await sb.from('tickets').update({status:'rejected'}).eq('id',id);
   if(r.error)return alert('失败：'+r.error.message);
+  pushNotifications([{userId:t.applicantId,category:'system',title:'您的工单 #'+t.code+' 已被关单',body:'很抱歉，管理员未通过您的申请。'}]);
   alert('已拒绝');
   await refreshFromServer();render();
 }
 
-/* ========== 站长：任命管理员 ========== */
+/* ========== 站长：任命/撤销管理员 ========== */
 function openAppointAdmin(){
   if(!isWebmaster())return alert('只有站长可以任命管理员');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
-    '<h2>👑 任命管理员</h2>'+
-    '<p class="muted" style="margin-bottom:12px">输入要任命的用户的 UID（数字，比如 1、3），在用户主页能看到</p>'+
+    '<h2>👑 任命管理员</h2><p class="muted" style="margin-bottom:12px">输入要任命的用户的 UID</p>'+
     '<div class="field"><label>UID</label><input id="ap-uid" class="input" type="number" placeholder="例如：2"></div>'+
-    '<div class="modal-btns">'+
-      '<button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button>'+
-      '<button class="btn btn-primary" onclick="OIL.submitAppointAdmin()">任命</button>'+
-    '</div>'+
+    '<div class="modal-btns"><button class="btn btn-ghost" onclick="OIL.closeModal()">取消</button><button class="btn btn-primary" onclick="OIL.submitAppointAdmin()">任命</button></div>'+
   '</div>');
 }
 function submitAppointAdmin(){
@@ -919,36 +1007,31 @@ function submitAppointAdmin(){
     if(r.error)return alert('任命失败：'+r.error.message);
     if(!r.data)return alert('任命失败：无权限修改该用户（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===u.id)db.users[i].role='admin';
+    pushNotifications([{userId:u.id,category:'system',title:'您已被授予管理员权限',body:'站长已任命您为社区管理员。'}]);
     closeModal();
     alert('已任命 '+u.username+' 为管理员');
     render();
   });
 }
 
-/* ========== 站长：撤销管理员（侧边栏入口） ========== */
 function openRevokeAdmin(){
   if(!isWebmaster())return alert('只有站长可以撤销管理员');
   var admins=db.users.filter(function(u){return !u.isBot&&!u.isWebmaster&&u.role==='admin';});
   var listHTML='';
-  if(admins.length===0){
-    listHTML='<p class="muted" style="margin:12px 0">当前没有可撤销的管理员。</p>';
-  }else{
+  if(admins.length===0){listHTML='<p class="muted" style="margin:12px 0">当前没有可撤销的管理员。</p>';}
+  else{
     listHTML='<div style="max-height:240px;overflow-y:auto;margin:8px 0">';
     admins.forEach(function(u){
       listHTML+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#0e1016;border-radius:8px;margin-bottom:6px">'+
         '<span><b class="name-admin">'+esc(u.username)+'</b> <span class="uid-text">#'+u.seq+'</span></span>'+
-        '<button class="btn btn-danger btn-sm" onclick="OIL.revokeAdminRole(\''+u.id+'\')">撤销</button>'+
-      '</div>';
+        '<button class="btn btn-danger btn-sm" onclick="OIL.revokeAdminRole(\''+u.id+'\')">撤销</button></div>';
     });
     listHTML+='</div>';
   }
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
-    '<h2>⬇️ 撤销管理员</h2>'+
-    '<p class="muted" style="margin-bottom:10px">点击列表中的「撤销」按钮即可撤销该用户的管理员权限。</p>'+
+    '<h2>⬇️ 撤销管理员</h2><p class="muted" style="margin-bottom:10px">点击列表中的「撤销」按钮即可撤销该用户的管理员权限。</p>'+
     listHTML+
-    '<div class="modal-btns">'+
-      '<button class="btn btn-ghost" onclick="OIL.closeModal()">关闭</button>'+
-    '</div>'+
+    '<div class="modal-btns"><button class="btn btn-ghost" onclick="OIL.closeModal()">关闭</button></div>'+
   '</div>');
 }
 
@@ -962,9 +1045,9 @@ function revokeAdminRole(userId){
     if(r.error)return alert('撤销失败：'+r.error.message);
     if(!r.data)return alert('撤销失败：无权限（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role='user';
+    pushNotifications([{userId:userId,category:'system',title:'您已被撤销管理员权限',body:'站长已撤销您的社区管理员权限。'}]);
     alert('已撤销 '+u.username+' 的管理员权限');
-    closeModal();
-    render();
+    closeModal();render();
   });
 }
 
@@ -978,6 +1061,7 @@ function promoteToAdmin(userId){
     if(r.error)return alert('任命失败：'+r.error.message);
     if(!r.data)return alert('任命失败：无权限（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===userId)db.users[i].role='admin';
+    pushNotifications([{userId:userId,category:'system',title:'您已被授予管理员权限',body:'站长已任命您为社区管理员。'}]);
     alert('已任命 '+u.username+' 为管理员');
     render();
   });
@@ -1031,20 +1115,63 @@ function startContest(id){
   if(!confirm('宣布开始？'))return;
   c.status='ongoing';c.startedAt=Date.now();saveDB();render();
 }
-function finishContest(id){if(!confirm('确定结束？'))return;var c=findContest(id);if(!c)return;c.status='finished';c.finishedAt=Date.now();saveDB();render();}
+
+function confirmFinishContest(id){
+  if(!confirm('确定结束这场比赛吗？\n结束后需要判定胜方。'))return;
+  showModal('<div class="modal" onclick="event.stopPropagation()">'+
+    '<h2>🏁 判定胜负</h2>'+
+    '<p class="muted" style="margin-bottom:14px">请选择获胜的队伍，系统会向所有参赛者发送通知。</p>'+
+    '<div class="row" style="flex-direction:column;gap:10px">'+
+      '<button class="btn btn-primary btn-block" onclick="OIL.finalizeContest(\''+id+'\',\'A\')">🏆 A 队获胜</button>'+
+      '<button class="btn btn-primary btn-block" onclick="OIL.finalizeContest(\''+id+'\',\'B\')">🏆 B 队获胜</button>'+
+      '<button class="btn btn-ghost btn-block" onclick="OIL.finalizeContest(\''+id+'\',\'draw\')">🤝 平局（不发胜负通知）</button>'+
+      '<button class="btn btn-ghost btn-block" onclick="OIL.closeModal()">取消</button>'+
+    '</div>'+
+  '</div>');
+}
+
+async function finalizeContest(id,winner){
+  var c=findContest(id);if(!c)return;
+  c.status='finished';c.finishedAt=Date.now();
+  saveDB();
+  closeModal();
+
+  var notifs=[];
+  if(winner!=='draw'){
+    c.participants.forEach(function(p){
+      var u=findUserById(p.userId);
+      if(!u||u.isBot)return;
+      if(p.team===winner){
+        notifs.push({userId:p.userId,category:'contest',title:'比赛「'+c.title+'」您所在的队伍获胜了',body:'恭喜！您所在的 '+p.team+' 队赢得了比赛 #'+c.seq+'。',linkView:'contest',linkId:c.id});
+      }else if(p.team==='A'||p.team==='B'){
+        notifs.push({userId:p.userId,category:'contest',title:'比赛「'+c.title+'」您所在的队伍失败了',body:'很遗憾，您所在的 '+p.team+' 队未能获胜。再接再厉！',linkView:'contest',linkId:c.id});
+      }
+    });
+  }
+  if(notifs.length>0)await pushNotifications(notifs);
+  render();
+}
+
 function reopenContest(id){var c=findContest(id);if(!c)return;c.status='ongoing';saveDB();render();}
 function grantAdmin(cid){
   var c=findContest(cid);if(!c)return;
   var sel=document.getElementById('admin-sel-'+cid);if(!sel)return;
   var userId=sel.value;if(!userId)return;
   if(c.adminIds.indexOf(userId)<0)c.adminIds.push(userId);
-  saveDB();render();
+  var u=findUserById(userId);
+  saveDB();
+  if(u){
+    pushNotifications([{userId:userId,category:'system',title:'您已被授予管理比赛的权限',body:'您已被授予管理比赛「'+c.title+'」（#'+c.seq+'）的权限。',linkView:'contest',linkId:c.id}]);
+  }
+  render();
 }
 function revokeAdmin(cid,userId){
   var c=findContest(cid);if(!c)return;
   if(userId===c.adminIds[0]&&!confirm('这是比赛创建者，确定移除？'))return;
   c.adminIds=c.adminIds.filter(function(x){return x!==userId;});
-  saveDB();render();
+  saveDB();
+  pushNotifications([{userId:userId,category:'system',title:'您已被撤销管理比赛的权限',body:'您已被撤销管理比赛「'+c.title+'」（#'+c.seq+'）的权限。'}]);
+  render();
 }
 function applyJoin(id){
   var c=findContest(id);if(!c||!myProfile)return;
@@ -1063,7 +1190,9 @@ function approveJoin(id,userId){
   if(!chk.ok)return alert('无法批准：'+chk.msg);
   c.pendingRequests=c.pendingRequests.filter(function(x){return x!==userId;});
   if(!c.participants.some(function(p){return p.userId===userId;}))c.participants.push({userId:userId,team:'',position:'',isLocked:false});
-  saveDB();render();
+  saveDB();
+  pushNotifications([{userId:userId,category:'contest',title:'您已被批准加入比赛',body:'比赛「'+c.title+'」（#'+c.seq+'）已批准您的加入申请。',linkView:'contest',linkId:c.id}]);
+  render();
 }
 function rejectJoin(id,userId){var c=findContest(id);if(!c)return;c.pendingRequests=c.pendingRequests.filter(function(x){return x!==userId;});saveDB();render();}
 function leaveContest(id){if(!confirm('确定退出？'))return;var c=findContest(id);if(!c)return;c.participants=c.participants.filter(function(p){return p.userId!==myProfile.id;});saveDB();render();}
@@ -1125,7 +1254,7 @@ window.OIL={
   setPersonalProblem:setPersonalProblem,setTeamLink:setTeamLink,
   addParticipant:addParticipant,removeParticipant:removeParticipant,
   setTeam:setTeam,setPosition:setPosition,clearTeams:clearTeams,drawTeams:drawTeams,
-  startContest:startContest,finishContest:finishContest,reopenContest:reopenContest,
+  startContest:startContest,confirmFinishContest:confirmFinishContest,finalizeContest:finalizeContest,reopenContest:reopenContest,
   grantAdmin:grantAdmin,revokeAdmin:revokeAdmin,lockProblem:lockProblem,
   seedBots:seedBots,lockAll:lockAll,
   applyJoin:applyJoin,cancelApply:cancelApply,approveJoin:approveJoin,
@@ -1137,6 +1266,7 @@ window.OIL={
   approveTicket:approveTicket,rejectTicket:rejectTicket,
   openAppointAdmin:openAppointAdmin,submitAppointAdmin:submitAppointAdmin,
   openRevokeAdmin:openRevokeAdmin,revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
+  goNotifications:goNotifications,openNotification:openNotification,markAllRead:markAllRead,
   toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
   closeModal:closeModal
 };
@@ -1149,9 +1279,10 @@ async function boot(){
       .on('postgres_changes',{event:'*',schema:'public',table:'contests'},async function(){await refreshFromServer();safeRender();})
       .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},async function(){await refreshFromServer();safeRender();})
       .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},async function(){await refreshFromServer();safeRender();})
+      .on('postgres_changes',{event:'*',schema:'public',table:'notifications'},async function(){await refreshFromServer();safeRender();})
       .subscribe();
     sb.auth.onAuthStateChange(async function(event){
-      if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[],tickets:[]};safeRender();}
+      if(event==='SIGNED_OUT'){myProfile=null;db={users:[],contests:[],tickets:[],notifications:[]};safeRender();}
     });
   }catch(e){fatalEl.style.display='block';fatalEl.textContent='初始化失败：'+e.message+'\n'+(e.stack||'');}
 }
