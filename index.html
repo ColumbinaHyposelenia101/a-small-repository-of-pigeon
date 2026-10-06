@@ -671,9 +671,10 @@ function profileView(userId){
     '<div class="profile-info">'+
       '<h1><span class="'+nameColorClass(u)+'">'+esc(u.username)+'</span>'+tagHTML+badges+'</h1>'+
       '<div class="meta">'+
-        (u.seq?'UID: <b style="color:#a5b4fc">#'+u.seq+'</b> · ':'')+
-        (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString():'')
-      '</div>'+
+  (u.seq?'UID: <b style="color:#a5b4fc">#'+u.seq+'</b> · ':'')+
+  (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
+  '权限：<b style="color:'+(isPrivileged(u)?'#c084fc':'#7c8399')+'">'+(isPrivileged(u)?'管理员':'普通用户')+'</b>'
+'</div>'+
       (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
       (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
       '<div class="stats">'+
@@ -909,8 +910,9 @@ function submitAppointAdmin(){
   if(u.isWebmaster)return alert('该用户是站长');
   if(u.role==='admin')return alert('该用户已经是管理员');
   if(!confirm('确定任命 '+u.username+'（#'+u.seq+'）为社区管理员吗？'))return;
-  sb.from('profiles').update({role:'admin'}).eq('id',u.id).then(function(r){
+  sb.from('profiles').update({role:'admin'}).eq('id',u.id).select().single().then(function(r){
     if(r.error)return alert('任命失败：'+r.error.message);
+   (!r.data)return alert('任命失败：无权限修改该用户（检查 RLS 策略）');
     for(var i=0;i<db.users.length;i++)if(db.users[i].id===u.id)db.users[i].role='admin';
     closeModal();
     alert('已任命 '+u.username+' 为管理员');
