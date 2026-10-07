@@ -7,18 +7,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-  html{
-  background:#0e1016;
-  --card-alpha: 0.75;  /* 默认卡片透明度 75% */
-  --card-blur: 10px;   /* 默认毛玻璃模糊度 10px */
-}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:transparent;color:#e6e8ee;min-height:100vh;line-height:1.6}
-  #app-background{position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;transition:background-image .3s ease}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#0e1016;color:#e6e8ee;min-height:100vh;line-height:1.6}
   a{color:#818cf8;cursor:pointer;text-decoration:none}a:hover{text-decoration:underline}
   #fatal{position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 20px;font-family:monospace;font-size:13px;white-space:pre-wrap;display:none}
-  
-  /* 导航栏：半透明毛玻璃 */
-  .nav{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
+  .nav{background:#151824;border-bottom:1px solid #232838;position:sticky;top:0;z-index:10}
   .nav-inner{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
   .nav-left{display:flex;align-items:center;gap:12px}
   .hamburger{background:transparent;border:1px solid #2d3348;color:#e6e8ee;font-size:18px;padding:6px 12px;border-radius:8px;cursor:pointer;line-height:1}
@@ -35,10 +27,9 @@
   .bell-dot{position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:#ef4444;border:2px solid #151824;display:none}
   .bell-dot.show{display:block}
 
-  /* 侧边栏：半透明毛玻璃 */
   .sidebar-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:80;display:none}
   .sidebar-mask.open{display:block}
-  .sidebar{background:rgba(21, 24, 36, calc(var(--card-alpha) + 0.1)) !important;backdrop-filter:blur(var(--card-blur)) !important;border-right:1px solid #232838;z-index:90;transform:translateX(-100%);transition:transform .22s ease}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;background:#151824;border-right:1px solid #232838;z-index:90;transform:translateX(-100%);transition:transform .22s ease}
   .sidebar.open{transform:translateX(0)}
   .sidebar-inner{padding:22px 18px;display:flex;flex-direction:column;height:100%;overflow-y:auto}
   .sidebar-brand{font-weight:700;font-size:18px;margin-bottom:22px;cursor:pointer;padding-bottom:14px;border-bottom:1px solid #232838}
@@ -63,9 +54,7 @@
   .input,select,textarea{width:100%;padding:9px 12px;border-radius:8px;background:#0e1016;border:1px solid #2d3348;color:#e6e8ee;font-size:14px;font-family:inherit;outline:none}
   .input:focus,select:focus,textarea:focus{border-color:#6366f1}
   select{cursor:pointer}textarea{resize:vertical;min-height:90px}
-  
-  /* 卡片：半透明毛玻璃 */
-  .card{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:12px;padding:22px;margin-bottom:18px}
+  .card{background:#151824;border:1px solid #232838;border-radius:12px;padding:22px;margin-bottom:18px}
   .card h2{font-size:17px;margin-bottom:14px}
   .card h3{font-size:14px;margin:18px 0 8px;color:#b8bece}
   .card h3:first-child{margin-top:0}
@@ -79,9 +68,7 @@
   .status-ongoing{background:#14532d;color:#86efac}
   .status-finished{background:#422006;color:#fbbf24}
   .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  
-  /* 登录卡片：半透明毛玻璃 */
-  .auth-card{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:16px;padding:36px;width:100%;max-width:380px}
+  .auth-card{background:#151824;border:1px solid #232838;border-radius:16px;padding:36px;width:100%;max-width:380px}
   .auth-card h1{font-size:22px;margin-bottom:6px}
   .auth-card .input{margin-bottom:12px}
   .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap}
@@ -93,6 +80,7 @@
   .slot .pname{flex:1}
   .slot .pname a{color:inherit}
   .slot .pname a:hover{color:#818cf8}
+  .slot .lock{font-size:12px;margin-left:auto;opacity:.75}
   .vs{align-self:center;font-weight:700;color:#6366f1;font-size:18px;padding-top:30px}
   .contest-item{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#151824;border:1px solid #232838;border-radius:10px;margin-bottom:10px;cursor:pointer;transition:.15s}
   .contest-item:hover{border-color:#6366f1}
@@ -108,6 +96,9 @@
   .divider{height:1px;background:#232838;margin:18px 0}
   .desc-text{white-space:pre-wrap;color:#d1d5db}
   .intro-card{border-color:#4f46e5}
+  .result-card{border-color:#fbbf24}
+  .result-card .result-line{font-size:20px;font-weight:700;margin-top:6px}
+  .winner-col .tag{box-shadow:0 0 0 1px #fbbf24}
 
   .name-admin{color:#c084fc;font-weight:600}
   .name-user{color:#e6e8ee}
@@ -137,9 +128,8 @@
   .badge-bot{background:#374151;color:#d1d5db}
   .cid-badge{display:inline-block;padding:1px 7px;border-radius:6px;font-size:11px;background:#232838;color:#a5b4fc;font-family:monospace;margin-left:6px}
 
-  /* 弹窗：半透明毛玻璃 */
   .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-  .modal{background:rgba(21, 24, 36, var(--card-alpha)) !important;backdrop-filter:blur(var(--card-blur)) !important;border:1px solid #232838;border-radius:14px;padding:26px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
+  .modal{background:#151824;border:1px solid #232838;border-radius:14px;padding:26px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto}
   .modal h2{font-size:18px;margin-bottom:16px}
   .modal .field{margin-bottom:12px}
   .modal-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
@@ -165,13 +155,9 @@
   .notif-empty{padding:60px 24px;text-align:center;color:#7c8399;font-size:14px}
   .notif-cat-label{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;background:#232838;color:#a5b4fc;margin-right:6px}
   .notif-cat-contest{background:#3b0764;color:#e9d5ff}
-
-  /* 背景设置预览 */
-  .bg-preview-img{width:100%;height:240px;border-radius:10px;background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid #232838;margin-top:8px}
 </style>
 </head>
 <body>
-<div id="app-background"></div>
 <div id="fatal"></div>
 <div id="app">加载中…</div>
 <div id="modal-root"></div>
@@ -198,10 +184,6 @@ var route={view:'home',contestId:null,userId:null,notifCat:'all'};
 var authMode='login';
 var connected=false,syncing=false;
 var sidebarOpen=false;
-
-/* ====== 背景设置相关 ====== */
-var BG_STORAGE_KEY='oil_custom_bg';
-var BG_MAX_SIZE=2*1024*1024;
 
 function uid(p){return(p||'id')+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -253,6 +235,7 @@ function genTicketCode(){
 }
 
 /* ========== 用户名规则 ========== */
+// 拆分统计 ASCII（A-Za-z0-9_）和 Unicode（其他）
 function countChars(name){
   var a=0,u=0;
   Array.from(name).forEach(function(ch){
@@ -290,8 +273,8 @@ function canRename(u){
 function cooldownText(u){if(u.isWebmaster)return'无限制';if(u.role==='admin')return'每 7 天一次';return'每 365 天一次';}
 
 /* ========== 数据转换 ========== */
-function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
-function contestToRow(c){var row={id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,created_by:c.createdBy||(myProfile?myProfile.id:null)};if(c.seq&&c.seq>0)row.seq=c.seq;return row;}
+function rowToContest(c){return{id:c.id,seq:c.seq||0,title:c.title,description:c.description||'',status:c.status,teamProblemLink:c.team_problem_link||'',personalProblems:c.personal_problems||{top:'',jug:'',mid:'',bot:'',sup:''},adminIds:c.admin_ids||[],participants:c.participants||[],pendingRequests:c.pending_requests||[],winner:c.winner||'',createdBy:c.created_by,createdAt:new Date(c.created_at).getTime()};}
+function contestToRow(c){var row={id:c.id,title:c.title,description:c.description||'',status:c.status,team_problem_link:c.teamProblemLink||'',personal_problems:c.personalProblems,admin_ids:c.adminIds,participants:c.participants,pending_requests:c.pendingRequests,winner:c.winner||'',created_by:c.createdBy||(myProfile?myProfile.id:null)};if(c.seq&&c.seq>0)row.seq=c.seq;return row;}
 function rowToUser(u){return{id:u.id,seq:u.seq||0,username:u.username,isWebmaster:u.is_webmaster,role:u.role||'user',tag:u.tag||'管理员',avatarUrl:u.avatar_url||'',nameChangedAt:u.name_changed_at,createdAt:u.created_at?new Date(u.created_at).getTime():0};}
 function rowToTicket(t){return{id:t.id,code:t.code||'',type:t.type,contestId:t.contest_id,contestSeq:t.contest_seq,contestTitle:t.contest_title,applicantId:t.applicant_id,message:t.message||'',status:t.status,createdAt:new Date(t.created_at).getTime()};}
 function rowToNotif(n){return{id:n.id,userId:n.user_id,category:n.category,title:n.title,body:n.body||'',linkView:n.link_view,linkId:n.link_id,isRead:!!n.is_read,createdAt:new Date(n.created_at).getTime()};}
@@ -377,69 +360,6 @@ function unreadCount(cat){
   return n;
 }
 
-/* ========== 背景设置逻辑 ========== */
-function applyBackground(dataUrl){
-  var layer=document.getElementById('app-background');
-  if(!layer)return;
-  if(dataUrl){
-    layer.style.backgroundImage='url("'+dataUrl+'")';
-  }else{
-    // 没有自定义背景时，加载默认的 bg.jpg
-    layer.style.backgroundImage='url("bg.jpg")';
-  }
-  // 更新设置页预览（如果当前在背景设置视图）
-  var preview=document.getElementById('bg-preview-img');
-  var box=document.getElementById('bg-preview-box');
-  if(preview&&box){
-    if(dataUrl){preview.style.backgroundImage='url("'+dataUrl+'")';box.style.display='block';}
-    else{preview.style.backgroundImage='url("bg.jpg")';box.style.display='none';}
-  }
-}
-
-function initBackground(){
-  var saved=localStorage.getItem(BG_STORAGE_KEY);
-  applyBackground(saved||null);
-  var savedAlpha = localStorage.getItem('oil_bg_alpha');
-  if (savedAlpha) {
-    document.documentElement.style.setProperty('--card-alpha', savedAlpha / 100);
-    var alphaSlider = document.getElementById('bg-alpha-slider');
-    if (alphaSlider) { alphaSlider.value = savedAlpha; document.getElementById('alpha-val').textContent = savedAlpha; }
-  }
-  var savedBlur = localStorage.getItem('oil_bg_blur');
-  if (savedBlur) {
-    document.documentElement.style.setProperty('--card-blur', savedBlur + 'px');
-    var blurSlider = document.getElementById('bg-blur-slider');
-    if (blurSlider) { blurSlider.value = savedBlur; document.getElementById('blur-val').textContent = savedBlur; }
-  }
-}
-
-function handleBgUpload(e){
-  var file=e.target.files&&e.target.files[0];
-  if(!file)return;
-  if(file.size>BG_MAX_SIZE){alert('图片太大！请选择小于 2MB 的图片。');e.target.value='';return;}
-  var reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      localStorage.setItem(BG_STORAGE_KEY, ev.target.result);
-      applyBackground(ev.target.result);
-      alert('背景设置成功！');
-    }catch(err){
-      alert('存储失败：图片可能超出浏览器 localStorage 限制，请压缩后重试。');
-      console.error(err);
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function resetBg(){
-  if(!confirm('确定恢复默认背景吗？'))return;
-  localStorage.removeItem(BG_STORAGE_KEY);
-  applyBackground(null);
-  var inp=document.getElementById('bg-upload-input');
-  if(inp)inp.value='';
-  alert('已恢复默认背景');
-}
-
 /* ========== 侧边栏 ========== */
 function toggleSidebar(){sidebarOpen=!sidebarOpen;render();}
 function closeSidebar(){sidebarOpen=false;render();}
@@ -447,6 +367,12 @@ function sidebarHTML(){
   if(!myProfile)return '';
   var isAdmin=isCommunityAdmin();
   var isWM=isWebmaster();
+  var pendCreate=0,pendAdmin=0;
+  db.tickets.forEach(function(t){
+    if(t.status!=='pending')return;
+    if(t.type==='create_contest')pendCreate++;
+    else if(t.type==='contest_admin')pendAdmin++;
+  });
   var links='';
   links+='<div class="sidebar-link" onclick="OIL.goHome();OIL.closeSidebar()"><span class="ico">📋</span><span>比赛列表</span></div>';
   if(!isAdmin){
@@ -454,15 +380,15 @@ function sidebarHTML(){
     links+='<div class="sidebar-link" onclick="OIL.openTicketAdminRequest();OIL.closeSidebar()"><span class="ico">🔑</span><span>申请管理权限</span></div>';
   }else{
     links+='<div class="sidebar-link" onclick="OIL.createContest();OIL.closeSidebar()"><span class="ico">➕</span><span>创建比赛</span></div>';
-    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'create_contest\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理比赛申请工单</span></div>';
-    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'contest_admin\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理权限申请工单</span></div>';
+    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'create_contest\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理比赛申请工单</span>'+(pendCreate?'<span class="badge-cnt">'+pendCreate+'</span>':'')+'</div>';
+    links+='<div class="sidebar-link" onclick="OIL.goTickets(\'contest_admin\');OIL.closeSidebar()"><span class="ico">📩</span><span>处理权限申请工单</span>'+(pendAdmin?'<span class="badge-cnt">'+pendAdmin+'</span>':'')+'</div>';
   }
+  links+='<div class="sidebar-link" onclick="OIL.goMyTickets();OIL.closeSidebar()"><span class="ico">📄</span><span>我的工单</span></div>';
   if(isWM){
     links+='<div class="sidebar-link" onclick="OIL.openAppointAdmin();OIL.closeSidebar()"><span class="ico">👑</span><span>任命管理员</span></div>';
     links+='<div class="sidebar-link danger" onclick="OIL.openRevokeAdmin();OIL.closeSidebar()"><span class="ico">⬇️</span><span>撤销管理员</span></div>';
   }
   links+='<div class="sidebar-link" onclick="OIL.openProfile(\''+myProfile.id+'\');OIL.closeSidebar()"><span class="ico">👤</span><span>我的主页</span></div>';
-  links+='<div class="sidebar-link" onclick="OIL.goBgSettings();OIL.closeSidebar()"><span class="ico">🖼️</span><span>背景设置</span></div>';
 
   return '<div class="sidebar-mask'+(sidebarOpen?' open':'')+'" onclick="OIL.closeSidebar()"></div>'+
     '<aside class="sidebar'+(sidebarOpen?' open':'')+'">'+
@@ -487,8 +413,8 @@ function render(){
   else if(route.view==='contest')content=contestView(user);
   else if(route.view==='profile')content=profileView(route.userId);
   else if(route.view==='tickets')content=ticketsView(route.ticketFilter);
+  else if(route.view==='myTickets')content=myTicketsView();
   else if(route.view==='notifications')content=notificationsView(route.notifCat);
-  else if(route.view==='bg-settings')content=bgSettingsView();
   var unreadAll=unreadCount(null);
   var bellCls='bell-btn'+(route.view==='notifications'?' active':'');
   app.innerHTML=
@@ -506,13 +432,6 @@ function render(){
     '</div></header>'+
     '<main class="container">'+content+'</main>';
   if(pendingModal)renderModal();
-  // 渲染后同步一次预览区
-  if(route.view==='bg-settings'){
-    var saved=localStorage.getItem(BG_STORAGE_KEY);
-    var preview=document.getElementById('bg-preview-img');
-    var box=document.getElementById('bg-preview-box');
-    if(preview&&box&&saved){preview.style.backgroundImage='url("'+saved+'")';box.style.display='block';}
-  }
 }
 function safeRender(){
   if(!myProfile)return;
@@ -520,34 +439,6 @@ function safeRender(){
   var ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
   render();
-}
-
-/* ========== 背景设置视图 ========== */
-function bgSettingsView(){
-  return '<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button><h1>🖼️ 背景设置</h1></div></div>'+
-    '<div class="card">'+
-      '<h2>自定义网站壁纸</h2>'+
-      '<p class="muted" style="margin-bottom:14px">上传一张图片作为网站最底层壁纸，保存在浏览器本地（localStorage），刷新和重新打开都不会丢失。</p>'+
-      '<input type="file" id="bg-upload-input" accept="image/*" style="display:none" onchange="OIL.handleBgUpload(event)">'+
-      '<div class="row">'+
-        '<button class="btn btn-primary" onclick="document.getElementById(\'bg-upload-input\').click()">📁 选择图片上传</button>'+
-        '<button class="btn btn-ghost" onclick="OIL.resetBg()">🔄 恢复默认背景</button>'+
-      '</div>'+
-      '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #232838">'+
-        '<div class="field">'+
-          '<label style="display:flex;justify-content:space-between">区域透明度（卡片/侧边栏）<span id="alpha-val" style="color:#a5b4fc">75</span>%</label>'+
-          '<input type="range" id="bg-alpha-slider" min="0" max="100" value="75" style="width:100%" oninput="OIL.updateBgAlpha(this.value)">'+
-        '</div>'+
-        '<div class="field" style="margin-top:16px">'+
-          '<label style="display:flex;justify-content:space-between">毛玻璃模糊度<span id="blur-val" style="color:#a5b4fc">10</span>px</label>'+
-          '<input type="range" id="bg-blur-slider" min="0" max="30" value="10" style="width:100%" oninput="OIL.updateBgBlur(this.value)">'+
-        '</div>'+
-      '</div>'+
-      '<div id="bg-preview-box" style="display:none;margin-top:20px">'+
-        '<p class="muted">当前自定义背景预览：</p>'+
-        '<div id="bg-preview-img" class="bg-preview-img"></div>'+
-      '</div>'+
-    '</div>';
 }
 
 /* ========== 登录/注册 ========== */
@@ -607,8 +498,8 @@ function goHome(){route={view:'home',contestId:null,userId:null,notifCat:'all'};
 function openContest(id){route={view:'contest',contestId:id,userId:null,notifCat:'all'};render();}
 function openProfile(id){route={view:'profile',contestId:null,userId:id,notifCat:'all'};render();}
 function goTickets(filter){route={view:'tickets',contestId:null,userId:null,ticketFilter:filter||'all',notifCat:'all'};render();}
+function goMyTickets(){route={view:'myTickets',contestId:null,userId:null,notifCat:'all'};render();}
 function goNotifications(cat){route={view:'notifications',contestId:null,userId:null,notifCat:cat||'all'};render();}
-function goBgSettings(){route={view:'bg-settings',contestId:null,userId:null,notifCat:'all'};render();}
 
 /* ========== 弹窗 ========== */
 var pendingModal=null;
@@ -701,8 +592,12 @@ function homeView(){
   else{
     list=db.contests.map(function(c){
       var cAdmin=canManage(c),count=c.participants.length;
+      var resultTag='';
+      if(c.status==='finished'&&c.winner){
+        resultTag=c.winner==='draw'?' <span class="tag" style="background:#422006;color:#fbbf24">🤝 平局</span>':' <span class="tag" style="background:#422006;color:#fbbf24">🏆 '+c.winner+' 队胜</span>';
+      }
       return '<div class="contest-item" onclick="OIL.openContest(\''+c.id+'\')"><div>'+
-        '<h3>'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span>'+(cAdmin?' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>':'')+'</h3>'+
+        '<h3>'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span>'+(cAdmin?' <span class="tag" style="background:#312e81;color:#a5b4fc">管理</span>':'')+resultTag+'</h3>'+
         '<span class="muted">'+count+'/10 人 · 创建于 '+new Date(c.createdAt).toLocaleDateString()+'</span></div>'+
         '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span></div>';
     }).join('');
@@ -716,7 +611,7 @@ async function createContest(){
   if(!title||!title.trim())return;
   if(!myProfile)return;
   var newId=uid('c');
-  var c={id:newId,title:title.trim(),description:'',status:'draft',teamProblemLink:'',adminIds:[myProfile.id],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:myProfile.id,createdAt:Date.now()};
+  var c={id:newId,title:title.trim(),description:'',status:'draft',teamProblemLink:'',adminIds:[myProfile.id],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],winner:'',createdBy:myProfile.id,createdAt:Date.now()};
   var r=await sb.from('contests').insert(contestToRow(c)).select().single();
   if(r.error)return alert('创建失败：'+r.error.message);
   await refreshFromServer();openContest(newId);
@@ -729,7 +624,7 @@ function contestView(user){
   var manage=canManage(c);
   var me=null;for(var j=0;j<c.participants.length;j++)if(c.participants[j].userId===user.id){me=c.participants[j];break;}
   var amPending=c.pendingRequests.indexOf(user.id)>=0;
-  var canJoin=canUserJoin(c,user);
+  var canJoin=canUserJoin(c,user.id);
 
   var html='<div class="page-head"><div>'+
     '<button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button>'+
@@ -752,6 +647,7 @@ function contestView(user){
   }
 
   html+=matchupView(c);
+  html+=resultCard(c);
 
   if(c.status==='ongoing'&&me)html+=playPanel(c,me);
   else if(c.status==='ongoing'&&!me)html+='<div class="card"><p class="muted">比赛正在进行，你是旁观者。</p></div>';
@@ -776,13 +672,27 @@ function matchupView(c){
   var B=c.participants.filter(function(p){return p.team==='B';});
   if(A.length===0&&B.length===0)return '';
   function col(label,players,cls){
-    return '<div class="team-col"><h3><span class="tag '+cls+'">'+label+' 队</span></h3>'+
+    var isWinner=c.status==='finished'&&c.winner===label;
+    return '<div class="team-col'+(isWinner?' winner-col':'')+'"><h3><span class="tag '+cls+'">'+label+' 队</span>'+(isWinner?' 🏆':'')+'</h3>'+
       POS_ORDER.map(function(pos){
         var p=null;for(var i=0;i<players.length;i++)if(players[i].position===pos){p=players[i];break;}
         return '<div class="slot"><span class="pos">'+POS_NAMES[pos]+'</span><span class="pname">'+(p?nameTagHTML(p.userId):'<span class="muted">—</span>')+'</span>'+(p&&p.isLocked?'<span class="lock">🔒</span>':'')+'</div>';
       }).join('')+'</div>';
   }
   return '<div class="card"><h2>对阵</h2><div class="matchup">'+col('A',A,'tag-a')+'<div class="vs">VS</div>'+col('B',B,'tag-b')+'</div></div>';
+}
+
+function resultCard(c){
+  if(c.status!=='finished'||!c.winner)return '';
+  if(c.winner==='draw')
+    return '<div class="card result-card"><h2>🏁 比赛结果</h2><p class="result-line">🤝 平局</p></div>';
+  var cls=c.winner==='A'?'tag-a':'tag-b';
+  var winners=c.participants.filter(function(p){return p.team===c.winner;});
+  var names=winners.map(function(p){return displayNamePlain(p.userId);}).join('、');
+  return '<div class="card result-card"><h2>🏁 比赛结果</h2>'+
+    '<p class="result-line"><span class="tag '+cls+'">'+c.winner+' 队</span> 获胜 🏆</p>'+
+    (names?'<p class="muted" style="margin-top:6px">'+esc(names)+'</p>':'')+
+  '</div>';
 }
 
 function playPanel(c,me){
@@ -862,7 +772,9 @@ function managePanel(c){
   }else if(c.status==='ongoing'){
     controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.confirmFinishContest(\''+c.id+'\')">结束比赛并判定胜负</button>';
   }else if(c.status==='finished'){
-    controls='<h3>比赛控制</h3><button class="btn btn-ghost" onclick="OIL.reopenContest(\''+c.id+'\')">重新开放</button>';
+    controls='<h3>比赛控制</h3>'+
+      (c.winner?'<p class="muted">本场结果：'+(c.winner==='draw'?'🤝 平局':'🏆 '+c.winner+' 队获胜')+'</p>':'')+
+      '<button class="btn btn-ghost" onclick="OIL.reopenContest(\''+c.id+'\')">重新开放</button>';
   }
 
   var adminSection='';
@@ -887,7 +799,7 @@ function profileView(userId){
   var u=findUserById(userId);
   if(!u)return '<div class="card"><p>用户不存在</p><button class="btn" onclick="OIL.goHome()">返回</button></div>';
   var isMe=myProfile&&myProfile.id===userId;
-  var isBot=!!u.isBot;
+  var userIsBot=!!u.isBot;
   var iAmWebmaster=isWebmaster();
   var canEditTag=iAmWebmaster;
   var initial=(u.username||'?')[0].toUpperCase();
@@ -899,18 +811,25 @@ function profileView(userId){
     var me=null;for(var k=0;k<c.participants.length;k++)if(c.participants[k].userId===userId){me=c.participants[k];break;}
     if(me)participated.push({contest:c,me:me});
   }
+  var wins=0,losses=0,draws=0;
+  participated.forEach(function(p){
+    var ct=p.contest;
+    if(ct.status!=='finished'||!ct.winner||!p.me.team)return;
+    if(ct.winner==='draw'){draws++;return;}
+    if(p.me.team===ct.winner)wins++;else losses++;
+  });
 
   var html='<div class="page-head"><div><button class="btn btn-ghost btn-sm" onclick="OIL.goHome()">← 返回</button></div></div>';
   var badges='';
   if(u.isWebmaster)badges+=' <span class="badge badge-webmaster">站长</span>';
   else if(u.role==='admin')badges+=' <span class="badge badge-admin">管理员</span>';
-  if(isBot)badges+=' <span class="badge badge-bot">人机</span>';
+  if(userIsBot)badges+=' <span class="badge badge-bot">人机</span>';
   var tagHTML='';
-  if(!isBot&&isPrivileged(u))tagHTML=' <span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
+  if(!userIsBot&&isPrivileged(u))tagHTML=' <span class="user-tag">'+esc(u.tag||'管理员')+'</span>';
 
   html+='<div class="profile-card">'+
-    '<div class="profile-avatar'+(isMe&&!isBot?' editable':'')+'" '+(isMe&&!isBot?'onclick="OIL.pickAvatar()"':'')+'>'+
-      avatarInner+(isMe&&!isBot?'<div class="overlay">点击更换</div>':'')+'</div>'+
+    '<div class="profile-avatar'+(isMe&&!userIsBot?' editable':'')+'" '+(isMe&&!userIsBot?'onclick="OIL.pickAvatar()"':'')+'>'+
+      avatarInner+(isMe&&!userIsBot?'<div class="overlay">点击更换</div>':'')+'</div>'+
     '<div class="profile-info">'+
       '<h1><span class="'+nameColorClass(u)+'">'+esc(u.username)+'</span>'+tagHTML+badges+'</h1>'+
       '<div class="meta">'+
@@ -918,11 +837,16 @@ function profileView(userId){
         (u.createdAt?'注册于 '+new Date(u.createdAt).toLocaleDateString()+' · ':'')+
         '权限：<b style="color:'+(isPrivileged(u)?'#c084fc':'#7c8399')+'">'+(isPrivileged(u)?'管理员':'普通用户')+'</b>'+
       '</div>'+
-      (isMe&&!isBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
-      (canEditTag&&!isBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
-      (iAmWebmaster&&!isMe&&!isBot&&u.role==='admin'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="OIL.revokeAdminRole(\''+userId+'\')">⬇️ 撤销管理员</button></div>':'')+
-      (iAmWebmaster&&!isMe&&!isBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
-      '<div class="stats"><div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div></div>'+
+      (isMe&&!userIsBot?'<div class="row"><button class="btn btn-sm btn-primary" onclick="OIL.openEditProfile()">✏️ 编辑资料</button></div>':'')+
+      (canEditTag&&!userIsBot?'<div class="row" style="margin-top:8px"><button class="btn btn-sm" onclick="OIL.editTag(\''+userId+'\')">✏️ 编辑 Tag</button></div>':'')+
+      (iAmWebmaster&&!isMe&&!userIsBot&&u.role==='admin'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="OIL.revokeAdminRole(\''+userId+'\')">⬇️ 撤销管理员</button></div>':'')+
+      (iAmWebmaster&&!isMe&&!userIsBot&&u.role==='user'?'<div class="row" style="margin-top:8px"><button class="btn btn-sm btn-primary" onclick="OIL.promoteToAdmin(\''+userId+'\')">⬆️ 设为管理员</button></div>':'')+
+      '<div class="stats">'+
+        '<div class="stat"><div class="num">'+participated.length+'</div><div class="lbl">参加比赛</div></div>'+
+        '<div class="stat"><div class="num" style="color:#86efac">'+wins+'</div><div class="lbl">胜场</div></div>'+
+        '<div class="stat"><div class="num" style="color:#f87171">'+losses+'</div><div class="lbl">负场</div></div>'+
+        (draws?'<div class="stat"><div class="num" style="color:#fbbf24">'+draws+'</div><div class="lbl">平局</div></div>':'')+
+      '</div>'+
     '</div></div>';
 
   if(participated.length>0){
@@ -931,7 +855,9 @@ function profileView(userId){
       var c=p.contest,me=p.me;
       html+='<div class="list-row" onclick="OIL.openContest(\''+c.id+'\')">'+
         '<div style="flex:1"><div style="font-weight:600;margin-bottom:2px">'+esc(c.title)+'<span class="cid-badge">#'+cidOf(c)+'</span></div>'+
-        '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+'</div></div>'+
+        '<div class="muted">'+(me.team?'队伍 '+me.team+' · 位置 '+(POS_NAMES[me.position]||'未分配'):'未分组')+' · '+statusText(c.status)+
+          (c.status==='finished'&&c.winner&&me.team?(c.winner==='draw'?' · 🤝 平局':(me.team===c.winner?' · 🏆 获胜':' · 败北')):'')+
+        '</div></div>'+
         '<span class="status status-'+c.status+'">'+statusText(c.status)+'</span></div>';
     });
     html+='</div>';
@@ -1034,6 +960,31 @@ function ticketsView(filter){
     (resolved.length?'<div class="card"><h2>历史记录</h2>'+resolved.map(row).join('')+'</div>':'');
 }
 
+function myTicketsView(){
+  if(!myProfile)return '';
+  var mine=db.tickets.filter(function(t){return t.applicantId===myProfile.id;});
+  var rows;
+  if(mine.length===0){
+    rows='<div class="card center"><p class="muted">你还没有提交过工单</p></div>';
+  }else{
+    rows='<div class="card">'+mine.map(function(t){
+      var typeText=t.type==='create_contest'?'申请创建比赛':'申请比赛管理权';
+      var statusCls=t.status==='approved'?'ok':t.status==='rejected'?'err':'warn';
+      var statusTxt=t.status==='approved'?'✅ 已批准':t.status==='rejected'?'❌ 已拒绝':'⏳ 待处理';
+      return '<div class="list-row" style="cursor:default;flex-direction:column;align-items:stretch;gap:6px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<div><b>'+typeText+'</b> <span class="uid-text">#'+esc(t.code||'--------')+'</span></div>'+
+          '<span class="'+statusCls+'" style="font-size:13px">'+statusTxt+'</span></div>'+
+        (t.contestTitle?'<div class="muted">比赛名：'+esc(t.contestTitle)+'</div>':'')+
+        (t.contestSeq?'<div class="muted">CID：#'+t.contestSeq+'</div>':'')+
+        (t.message?'<div class="muted">备注：'+esc(t.message)+'</div>':'')+
+        '<div class="muted" style="font-size:12px">提交于 '+new Date(t.createdAt).toLocaleString()+'</div>'+
+      '</div>';
+    }).join('')+'</div>';
+  }
+  return '<div class="page-head"><h1>📄 我的工单</h1></div>'+rows;
+}
+
 function openTicketCreate(){
   if(isCommunityAdmin())return alert('你已经是管理员，可以直接创建比赛');
   showModal('<div class="modal" onclick="event.stopPropagation()">'+
@@ -1095,7 +1046,7 @@ async function approveTicket(id){
   var notifs=[];
   if(t.type==='create_contest'){
     var newId=uid('c');
-    var c={id:newId,title:t.contestTitle||'未命名比赛',description:'',status:'draft',teamProblemLink:'',adminIds:[t.applicantId],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],createdBy:t.applicantId,createdAt:Date.now()};
+    var c={id:newId,title:t.contestTitle||'未命名比赛',description:'',status:'draft',teamProblemLink:'',adminIds:[t.applicantId],personalProblems:{top:'',jug:'',mid:'',bot:'',sup:''},participants:[],pendingRequests:[],winner:'',createdBy:t.applicantId,createdAt:Date.now()};
     var r1=await sb.from('contests').insert(contestToRow(c)).select().single();
     if(r1.error)return alert('创建比赛失败：'+r1.error.message);
     if(r1.data)c.seq=r1.data.seq;
@@ -1254,7 +1205,7 @@ function startContest(id){
   var c=findContest(id);if(!c)return;
   var errs=validateContest(c);if(errs.length)return alert('无法开始：\n'+errs.join('\n'));
   if(!confirm('宣布开始？'))return;
-  c.status='ongoing';c.startedAt=Date.now();saveDB();render();
+  c.status='ongoing';c.startedAt=Date.now();c.winner='';saveDB();render();
 }
 
 function confirmFinishContest(id){
@@ -1273,7 +1224,7 @@ function confirmFinishContest(id){
 
 async function finalizeContest(id,winner){
   var c=findContest(id);if(!c)return;
-  c.status='finished';c.finishedAt=Date.now();
+  c.status='finished';c.finishedAt=Date.now();c.winner=winner;
   saveDB();
   closeModal();
 
@@ -1293,7 +1244,7 @@ async function finalizeContest(id,winner){
   render();
 }
 
-function reopenContest(id){var c=findContest(id);if(!c)return;c.status='ongoing';saveDB();render();}
+function reopenContest(id){var c=findContest(id);if(!c)return;c.status='ongoing';c.winner='';saveDB();render();}
 function grantAdmin(cid){
   var c=findContest(cid);if(!c)return;
   var sel=document.getElementById('admin-sel-'+cid);if(!sel)return;
@@ -1395,8 +1346,6 @@ window.OIL={
   setPersonalProblem:setPersonalProblem,setTeamLink:setTeamLink,
   addParticipant:addParticipant,removeParticipant:removeParticipant,
   setTeam:setTeam,setPosition:setPosition,clearTeams:clearTeams,drawTeams:drawTeams,
-   updateBgAlpha: function(val) { document.documentElement.style.setProperty('--card-alpha', val / 100); document.getElementById('alpha-val').textContent = val; localStorage.setItem('oil_bg_alpha', val); },
-  updateBgBlur: function(val) { document.documentElement.style.setProperty('--card-blur', val + 'px'); document.getElementById('blur-val').textContent = val; localStorage.setItem('oil_bg_blur', val); },
   startContest:startContest,confirmFinishContest:confirmFinishContest,finalizeContest:finalizeContest,reopenContest:reopenContest,
   grantAdmin:grantAdmin,revokeAdmin:revokeAdmin,lockProblem:lockProblem,
   seedBots:seedBots,lockAll:lockAll,
@@ -1404,20 +1353,18 @@ window.OIL={
   rejectJoin:rejectJoin,leaveContest:leaveContest,
   openProfile:openProfile,openEditProfile:openEditProfile,pickAvatar:pickAvatar,
   editTag:editTag,
-  goTickets:goTickets,openTicketCreate:openTicketCreate,submitTicketCreate:submitTicketCreate,
+  goTickets:goTickets,goMyTickets:goMyTickets,openTicketCreate:openTicketCreate,submitTicketCreate:submitTicketCreate,
   openTicketAdminRequest:openTicketAdminRequest,submitTicketAdminRequest:submitTicketAdminRequest,
   approveTicket:approveTicket,rejectTicket:rejectTicket,
   openAppointAdmin:openAppointAdmin,submitAppointAdmin:submitAppointAdmin,
   openRevokeAdmin:openRevokeAdmin,revokeAdminRole:revokeAdminRole,promoteToAdmin:promoteToAdmin,
   goNotifications:goNotifications,openNotification:openNotification,markAllRead:markAllRead,
   toggleSidebar:toggleSidebar,closeSidebar:closeSidebar,
-  closeModal:closeModal,
-  goBgSettings:goBgSettings,handleBgUpload:handleBgUpload,resetBg:resetBg
+  closeModal:closeModal
 };
 
 async function boot(){
   try{
-    initBackground();
     await refreshFromServer();
     if(document.getElementById('app').innerHTML==='加载中…')render();
     sb.channel('oil-changes')
